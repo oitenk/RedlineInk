@@ -1295,7 +1295,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
             + '" aria-label="Threshold"><output>' + Math.round(n(l.threshold, 0.5) * 100) + '%</output></div></div>');
         }
         F.push('<label class="field"><span>Then</span><select data-light="effect" data-rebuild>'
-          + [['show', when === 'ct' ? 'Show it, as the HUD does' : 'Show it'], ['hide', 'Hide it'], ['color', 'Change colour'],
+          + [['show', when === 'ct' ? 'Show it, as D.O.P.E. gives it' : 'Show it'], ['hide', 'Hide it'], ['color', 'Change colour'],
             ['blink', 'Blink it'], ['blinkSteady', 'Blink while on, steady while off'], ['flash', 'Fade in and out']]
             .map(([k, t]) => '<option value="' + k + '"' + ((l.effect || 'show') === k ? ' selected' : '') + '>' + t + '</option>').join('') + '</select></label>');
         if (l.effect === 'color') {
@@ -1308,7 +1308,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
             + '" step="0.05" min="0.1"></label>');
         } else if (l.effect === 'blink' || l.effect === 'blinkSteady') {
           F.push('<label class="field"><span>Blinks a second</span><input type="number" data-light="rate" value="' + esc(n(l.rate, 4))
-            + '" step="0.5" min="0.5"><span class="help">4 is the rate of D.O.P.E.\'s HUD lights.</span></label>');
+            + '" step="0.5" min="0.5"><span class="help">4 is the rate D.O.P.E.\'s lights flash at.</span></label>');
         }
         if (['rect', 'line', 'text', 'image'].includes(el.type) && ['show', 'blink', 'flash'].includes(l.effect || 'show')) {
           const asDesign = state.design.offLights === 'hidden' ? 'hidden' : 'unlit';
@@ -1318,7 +1318,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
             + '</select></label>');
         }
         if (when === 'ct' && (l.effect || 'show') === 'show' && (G.ctLamp(l.lamp) || G.CT_LAMPS[0]).flashes) {
-          F.push('<p class="help" style="grid-column:1/-1;margin:0">Steady while lit and flashing four times a second while it flashes, exactly as D.O.P.E.\'s HUD light.</p>');
+          F.push('<p class="help" style="grid-column:1/-1;margin:0">Steady while lit and flashing four times a second while it flashes, exactly as D.O.P.E. gives it.</p>');
         }
       }
     }

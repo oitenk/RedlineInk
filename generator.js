@@ -30,8 +30,8 @@
   // the scripts compile, so a dashboard left behind does nothing instead of stopping every script mod from loading.
   const CT_GUARD = '@if(ModuleExists("CarTuning") && ModuleExists("Codeware"))';
 
-  // D.O.P.E.'s dashboard feed (CarTuningDash, in the mod's Traction.reds): the lamps it reports, as its own HUD
-  // shows them: 0 off, 1 lit, 2 flashing four times a second; -1 for one the car does not have at all (optional:
+  // D.O.P.E.'s dashboard feed (CarTuningDash, in the mod's Traction.reds): the lamps it reports: 0 off, 1 lit,
+  // 2 flashing four times a second; -1 for one the car does not have at all (optional:
   // those lights are hidden then). Keep in step with the mod.
   const CT_LAMPS = [
     { key: 'traction', label: 'Traction control', flashes: true, optional: true,
@@ -56,12 +56,12 @@
   ];
   const ctLamp = (key) => CT_LAMPS.find((l) => l.key === key) || null;
 
-  // D.O.P.E.'s own icons, in its CarTuning.archive, with the HUD's colours.
+  // D.O.P.E.'s own icons, in its CarTuning.archive, with the colours they were drawn for.
   const CT_ICONS = [
     { key: 'traction', label: 'Traction control', atlas: 'oitenk\\car_tuning\\tc_light.inkatlas', part: 'tc_light', color: '#ff9e14' },
     { key: 'headlightLow', label: 'Low beam', atlas: 'oitenk\\car_tuning\\headlight_low.inkatlas', part: 'headlight_low', color: '#45ff6e' },
     { key: 'headlightHigh', label: 'High beam', atlas: 'oitenk\\car_tuning\\headlight_high.inkatlas', part: 'headlight_high', color: '#5e9eff' },
-    // the hill hold icon: lit green, and a dark grey (#4d545c) while off, as D.O.P.E.'s HUD shows it
+    // the hill hold icon: lit green, and the unlit dark grey (#4d545c) while off
     { key: 'hold', label: 'Hill hold', atlas: 'oitenk\\car_tuning\\hold_light.inkatlas', part: 'hold_light', color: '#45ff6e' },
     { key: 'gasPump', label: 'Gas pump', atlas: 'oitenk\\car_tuning\\gas_pump.inkatlas', part: 'gas_pump', color: '#ffffff' },
   ];
@@ -269,7 +269,7 @@
     return v < 0 && !(ctLamp(key) || {}).optional ? 0 : v;
   }
 
-  // True while a lit light also blinks: the blink effect, or a flashing D.O.P.E. lamp shown as the HUD shows it.
+  // True while a lit light also blinks: the blink effect, or a flashing D.O.P.E. lamp shown as D.O.P.E. gives it.
   function lightBlinks(design, el, state) {
     const l = el.light;
     if (!l || !l.when || !lightOn(design, el, state)) return false;
@@ -995,7 +995,7 @@
     out('    return ClampF((fraction - from) / MaxF(to - from, 0.001), 0.0, 1.0);');
     out('  }');
     out('');
-    out('  // A lamp as D.O.P.E.\'s HUD shows it: steady while lit, four flashes a second while flashing.');
+    out('  // A lamp as D.O.P.E. gives it: steady while lit, four flashes a second while flashing.');
     out('  private func LampOn(name: CName) -> Bool {');
     out('    let state: Int32 = this.Lamp(name);');
     out('    return state == 1 || (state == 2 && this.Blink(4.0));');
