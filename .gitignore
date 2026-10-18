@@ -1,0 +1,5 @@
+# Test output: generated designs, and copies of the game's script cache made by test/compile.ps1.
+test/out*/
+
+# Exported dashboards.
+*.zip

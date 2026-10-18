@@ -1,0 +1,2021 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Redline Ink</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap">
+<style>
+/* Layout: an instrument bench. Tools on the left rail, the dashboard on a dark stage in the middle,
+   the inspector on the right; test drive controls and layers/code below the stage. */
+:root {
+  --bg: #e7ebee;
+  --panel: #f5f7f8;
+  --raised: #ffffff;
+  --ink: #141a1e;
+  --muted: #59666f;
+  --line: #ccd4d9;
+  --accent: #a85b06;
+  --accent-soft: #f3e2cb;
+  --accent-ink: #ffffff;
+  --select: #0a7fb0;
+  --warn: #9a5b00;
+  --danger: #b3261e;
+  --good: #2f7a3a;
+  --stage: #06080a;
+  --stage-edge: #2b353c;
+  --grid-minor: #10161a;
+  --grid-major: #1a2228;
+  --ghost: #6c7c86;
+  --code-bg: #f0f3f5;
+  --code-comment: #6b7a83;
+  --code-key: #8a3c00;
+  --code-str: #1f6f4a;
+  --code-num: #2856a8;
+  --code-ann: #7a3fa0;
+  --font-ui: "Barlow", "Segoe UI", system-ui, sans-serif;
+  --font-head: "Barlow Condensed", "Arial Narrow", "Segoe UI", sans-serif;
+  --font-code: "JetBrains Mono", Consolas, "Courier New", monospace;
+  --radius: 6px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1316; --panel: #161c20; --raised: #1c2328; --ink: #e4eaee; --muted: #8d9ba4;
+    --line: #2a343b; --accent: #f0a23a; --accent-soft: #3a2a14; --accent-ink: #1a1206;
+    --select: #46c0ee; --warn: #e8b04a; --danger: #ff7b72; --good: #7fcf88;
+    --code-bg: #12171a; --code-comment: #7e8d96; --code-key: #f0a23a; --code-str: #8fd19e;
+    --code-num: #8ab8ff; --code-ann: #d2a8ff;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1316; --panel: #161c20; --raised: #1c2328; --ink: #e4eaee; --muted: #8d9ba4;
+  --line: #2a343b; --accent: #f0a23a; --accent-soft: #3a2a14; --accent-ink: #1a1206;
+  --select: #46c0ee; --warn: #e8b04a; --danger: #ff7b72; --good: #7fcf88;
+  --code-bg: #12171a; --code-comment: #7e8d96; --code-key: #f0a23a; --code-str: #8fd19e;
+  --code-num: #8ab8ff; --code-ann: #d2a8ff;
+  color-scheme: dark;
+}
+
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font-ui); font-size: 14px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 12px;
+  box-sizing: border-box;
+}
+*, *::before, *::after { box-sizing: border-box; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--select); outline-offset: 2px; }
+
+.app { display: grid; gap: 12px; grid-template-columns: 172px minmax(0, 1fr) 300px;
+  grid-template-areas: "top top top" "rail stage inspector" "rail lower inspector"; align-items: start; }
+
+/* top bar */
+.top { grid-area: top; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.brand { font-family: var(--font-head); font-weight: 700; font-size: 22px; letter-spacing: .04em;
+  text-transform: uppercase; display: flex; align-items: baseline; gap: 8px; }
+.brand .tick { width: 10px; height: 18px; background: var(--accent); transform: skewX(-18deg); align-self: center; }
+.brand small { font-family: var(--font-ui); font-weight: 500; font-size: 12px; color: var(--muted);
+  letter-spacing: .02em; text-transform: none; }
+.design-name { min-width: 0; flex: 1 1 180px; max-width: 320px; background: transparent; border: 1px solid transparent;
+  border-radius: var(--radius); padding: 5px 8px; font-weight: 600; font-size: 15px; }
+.design-name:hover, .design-name:focus { border-color: var(--line); background: var(--raised); }
+.status { font-size: 12px; color: var(--muted); padding: 3px 8px; border-radius: 99px; border: 1px solid var(--line);
+  white-space: nowrap; }
+.status[data-kind="saved"] { color: var(--good); border-color: color-mix(in srgb, var(--good) 40%, var(--line)); }
+.status[data-kind="dirty"] { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 40%, var(--line)); }
+.top-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto; }
+
+.btn { border: 1px solid var(--line); background: var(--raised); border-radius: var(--radius); padding: 6px 11px;
+  cursor: pointer; font-weight: 500; line-height: 1.2; white-space: nowrap; }
+.btn:hover { border-color: var(--muted); }
+.btn:disabled { opacity: .45; cursor: default; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.btn.ghost { background: transparent; }
+.btn.small { padding: 3px 8px; font-size: 12px; }
+.btn.danger { color: var(--danger); }
+
+/* rail */
+.rail { grid-area: rail; display: flex; flex-direction: column; gap: 14px; position: sticky; top: env(safe-area-inset-top, 0px); }
+.rail h2, .panel h2 { font-family: var(--font-head); font-weight: 600; font-size: 13px; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
+.tools { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.tool { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 7px 4px 5px; border-radius: var(--radius);
+  border: 1px solid var(--line); background: var(--raised); cursor: pointer; font-size: 12px; }
+.tool svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.6; }
+.tool kbd { font-family: var(--font-code); font-size: 10px; color: var(--muted); }
+.tool[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.presets { display: flex; flex-direction: column; gap: 4px; }
+.preset { text-align: left; padding: 6px 8px; border-radius: var(--radius); border: 1px solid var(--line);
+  background: var(--raised); cursor: pointer; display: flex; justify-content: space-between; gap: 6px; font-size: 13px; }
+.preset span { color: var(--muted); font-size: 11px; }
+.preset:hover, .tool:hover { border-color: var(--muted); }
+
+/* stage */
+.stage-wrap { grid-area: stage; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.stage-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font-size: 13px; color: var(--muted); }
+.stage-bar label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+.stage-bar select { padding: 2px 4px; border: 1px solid var(--line); border-radius: 4px; background: var(--raised); }
+.stage-bar .spacer { flex: 1; }
+.stage-scroll { background: var(--stage); border-radius: 8px; border: 1px solid var(--stage-edge); overflow: auto;
+  max-height: 70vh; position: relative; touch-action: none; }
+#stage { display: block; width: 100%; height: auto; user-select: none; -webkit-user-select: none; }
+#stage.zoomed { width: auto; }
+.stage-hint { position: absolute; left: 10px; bottom: 8px; font-size: 12px; color: #8fa0aa; pointer-events: none;
+  background: rgba(6, 8, 10, .7); padding: 2px 6px; border-radius: 4px; }
+.example-chip { position: absolute; right: 10px; top: 8px; font-size: 12px; color: #f0c88c; background: rgba(40, 26, 8, .85);
+  border: 1px solid #6b4a1a; padding: 2px 8px; border-radius: 99px; pointer-events: none; }
+
+/* test drive */
+.lower { grid-area: lower; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px; min-width: 0; }
+.drive { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px 16px; align-items: end; }
+.drive .ctl { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.drive .ctl > span { font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; gap: 6px; }
+.drive .ctl output { font-variant-numeric: tabular-nums; color: var(--ink); font-weight: 600; }
+.drive input[type="range"] { width: 100%; accent-color: var(--accent); }
+.gears { display: flex; flex-wrap: wrap; gap: 3px; }
+.gears button { min-width: 28px; padding: 3px 0; border-radius: 4px; border: 1px solid var(--line); background: var(--raised);
+  cursor: pointer; font-family: var(--font-head); font-weight: 600; }
+.gears button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.chip { border: 1px solid var(--line); border-radius: 99px; padding: 3px 10px; background: var(--raised); cursor: pointer; font-size: 12px; }
+.chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); font-weight: 600; }
+.drive-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 8px; }
+.drive-head h2 { margin: 0; }
+.drive-head .note { font-size: 12px; color: var(--muted); }
+
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin: -4px -4px 10px; padding: 0 4px; }
+.tab { border: none; background: none; padding: 7px 10px; cursor: pointer; font-family: var(--font-head); font-weight: 600;
+  font-size: 14px; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); border-bottom: 2px solid transparent;
+  margin-bottom: -1px; }
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+
+/* layers */
+.layers { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; max-height: 340px; overflow: auto; }
+.layer { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto auto; align-items: center; gap: 8px; padding: 5px 6px;
+  border-radius: 5px; cursor: pointer; border: 1px solid transparent; }
+.layer:hover { background: var(--raised); }
+.layer[aria-selected="true"] { border-color: var(--select); background: var(--raised); }
+.layer .kind { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; font-family: var(--font-head); }
+.layer .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.badge { font-size: 11px; padding: 1px 7px; border-radius: 99px; background: var(--accent-soft); color: var(--ink); white-space: nowrap; }
+.badge.light { background: color-mix(in srgb, var(--select) 18%, transparent); }
+.layer .ord { display: flex; gap: 2px; }
+.layer .ord button { border: 1px solid var(--line); background: var(--panel); border-radius: 4px; cursor: pointer; padding: 0 5px;
+  font-size: 12px; line-height: 18px; }
+.empty { color: var(--muted); font-size: 13px; padding: 6px 2px; }
+
+/* code */
+.code-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 8px; }
+.code-actions .where { font-size: 12px; color: var(--muted); font-family: var(--font-code); }
+.checks { margin: 0 0 8px; padding: 8px 10px; border-radius: 6px; border: 1px solid color-mix(in srgb, var(--warn) 45%, var(--line));
+  font-size: 13px; color: var(--ink); background: color-mix(in srgb, var(--warn) 8%, transparent); }
+.checks ul { margin: 4px 0 0; padding-left: 18px; }
+.code { background: var(--code-bg); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; margin: 0;
+  font-family: var(--font-code); font-size: 12px; line-height: 1.55; overflow: auto; max-height: 460px; white-space: pre; tab-size: 2; }
+.code .c { color: var(--code-comment); }
+.code .k { color: var(--code-key); font-weight: 500; }
+.code .s { color: var(--code-str); }
+.code .n { color: var(--code-num); }
+.code .a { color: var(--code-ann); }
+
+/* inspector */
+.inspector { grid-area: inspector; display: flex; flex-direction: column; gap: 12px; position: sticky; top: env(safe-area-inset-top, 0px);
+  max-height: calc(100vh - 24px); overflow: auto; }
+.insp-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.insp-title h2 { margin: 0; }
+.fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; }
+.field { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.field.wide { grid-column: 1 / -1; }
+.field > span { font-size: 12px; color: var(--muted); }
+.field input[type="text"], .field input[type="number"], .field select {
+  width: 100%; min-width: 0; padding: 5px 7px; border: 1px solid var(--line); border-radius: 5px; background: var(--raised); }
+.field input[type="number"] { font-variant-numeric: tabular-nums; }
+.field .colorrow { display: flex; gap: 6px; align-items: center; }
+.field .colorrow input[type="color"] { width: 34px; height: 30px; padding: 0; border: 1px solid var(--line); border-radius: 5px; background: none; }
+.field .colorrow input[type="text"] { font-family: var(--font-code); font-size: 12px; }
+.field .rangerow { display: flex; gap: 8px; align-items: center; }
+.field .rangerow input[type="range"] { flex: 1; min-width: 0; accent-color: var(--accent); }
+.field .rangerow output { font-variant-numeric: tabular-nums; font-size: 12px; min-width: 36px; text-align: right; }
+.field.check { flex-direction: row; align-items: center; gap: 7px; }
+.field .help { font-size: 11.5px; color: var(--muted); line-height: 1.35; }
+.sect { grid-column: 1 / -1; font-family: var(--font-head); font-weight: 600; font-size: 12px; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--muted); border-top: 1px solid var(--line); padding-top: 10px; margin-top: 4px; }
+.role { grid-column: 1 / -1; background: var(--accent-soft); border-radius: 6px; padding: 8px 9px; display: flex; flex-direction: column; gap: 6px; }
+.role > span { font-family: var(--font-head); font-weight: 600; font-size: 13px; letter-spacing: .05em; text-transform: uppercase; }
+.role select { width: 100%; padding: 5px 7px; border: 1px solid var(--line); border-radius: 5px; background: var(--raised); }
+.role .help { font-size: 12px; color: var(--ink); opacity: .8; }
+.insp-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.kbd-help { font-size: 12px; color: var(--muted); line-height: 1.6; }
+.kbd-help kbd { font-family: var(--font-code); font-size: 11px; border: 1px solid var(--line); border-radius: 3px; padding: 0 4px; background: var(--raised); }
+
+/* overlay (designs) */
+.overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, .45); display: flex; align-items: flex-start; justify-content: center;
+  padding: calc(48px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 16px max(16px, env(safe-area-inset-left, 0px)); z-index: 20; }
+.sheet { background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 10px; width: min(560px, 100%);
+  max-height: 80vh; overflow: auto; padding: 16px; }
+.sheet h2 { font-family: var(--font-head); font-size: 18px; letter-spacing: .04em; text-transform: uppercase; margin: 0 0 4px; }
+.sheet p { color: var(--muted); margin: 0 0 12px; font-size: 13px; }
+.saved-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.saved-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 8px;
+  border: 1px solid var(--line); border-radius: 6px; background: var(--raised); }
+.saved-list .meta { font-size: 12px; color: var(--muted); }
+.saved-list .nm { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.saved-list .acts { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+
+.toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+  background: var(--ink); color: var(--bg); padding: 8px 14px; border-radius: 6px; font-size: 13px; z-index: 30; max-width: calc(100% - 32px); }
+
+@media (max-width: 1180px) {
+  .app { grid-template-columns: 160px minmax(0, 1fr); grid-template-areas: "top top" "rail stage" "rail lower" "inspector inspector"; }
+  .inspector { position: static; max-height: none; }
+}
+@media (max-width: 760px) {
+  .app { grid-template-columns: minmax(0, 1fr); grid-template-areas: "top" "rail" "stage" "inspector" "lower"; }
+  .rail { position: static; }
+  .tools { grid-template-columns: repeat(4, 1fr); }
+  .presets { flex-direction: row; flex-wrap: wrap; }
+  .preset { flex: 1 1 140px; }
+  .top-actions { margin-left: 0; }
+  .stage-scroll { max-height: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .flash, .blink { animation: none !important; }
+}
+@keyframes ri-flash { from { opacity: 1; } to { opacity: .15; } }
+.flash { animation-name: ri-flash; animation-iteration-count: infinite; animation-direction: alternate; animation-timing-function: linear; }
+@keyframes ri-blink { 50% { opacity: 0; } }
+.blink { animation-name: ri-blink; animation-iteration-count: infinite; animation-timing-function: step-end; }
+</style>
+
+<div class="app" id="app">
+  <header class="top">
+    <div class="brand"><span class="tick" aria-hidden="true"></span>Redline Ink <small>vehicle HUD sketchpad for redscript</small></div>
+    <input class="design-name" id="designName" type="text" aria-label="Design name" spellcheck="false">
+    <span class="status" id="status">Draft</span>
+    <div class="top-actions">
+      <button class="btn ghost" id="undoBtn" title="Undo (Ctrl+Z)">Undo</button>
+      <button class="btn ghost" id="redoBtn" title="Redo (Ctrl+Shift+Z)">Redo</button>
+      <button class="btn" id="newBtn">New</button>
+      <button class="btn" id="exampleBtn">Example</button>
+      <button class="btn" id="designsBtn">My designs</button>
+      <button class="btn" id="saveBtn">Save</button>
+      <button class="btn primary" id="exportBtn">Export redscript</button>
+    </div>
+  </header>
+
+  <aside class="rail" aria-label="Tools">
+    <section>
+      <h2>Draw</h2>
+      <div class="tools" id="tools"></div>
+    </section>
+    <section>
+      <h2>Add a part</h2>
+      <div class="presets" id="presets"></div>
+    </section>
+  </aside>
+
+  <main class="stage-wrap">
+    <div class="stage-bar">
+      <label><input type="checkbox" id="showGrid" checked> Grid</label>
+      <label><input type="checkbox" id="snapGrid" checked> Snap</label>
+      <label>Grid size
+        <select id="gridSize"><option>5</option><option selected>10</option><option>20</option></select></label>
+      <label><input type="checkbox" id="ghosts" checked> Show hidden lights</label>
+      <span class="spacer"></span>
+      <label>Zoom
+        <select id="zoom"><option value="fit" selected>Fit</option><option value="1">100%</option>
+          <option value="1.5">150%</option><option value="2">200%</option><option value="3">300%</option></select></label>
+    </div>
+    <div class="stage-scroll" id="stageScroll">
+      <svg id="stage" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Dashboard canvas"></svg>
+      <div class="stage-hint" id="stageHint"></div>
+      <div class="example-chip" id="exampleChip" hidden>Example design</div>
+    </div>
+  </main>
+
+  <section class="lower">
+    <div class="panel">
+      <div class="drive-head">
+        <h2>Test drive</h2>
+        <span class="note">Moves the bound parts the way the exported script will.</span>
+        <span class="spacer" style="flex:1"></span>
+        <button class="btn small" id="pullBtn">Run a pull</button>
+      </div>
+      <div class="drive" id="drive"></div>
+    </div>
+    <div class="panel">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" id="tabLayers" aria-selected="true">Layers</button>
+        <button class="tab" role="tab" id="tabCode" aria-selected="false">Redscript</button>
+      </div>
+      <div id="layersPane"></div>
+      <div id="codePane" hidden></div>
+    </div>
+  </section>
+
+  <aside class="inspector" id="inspector" aria-label="Inspector"></aside>
+</div>
+
+<div class="overlay" id="designsSheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="designsTitle">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+      <h2 id="designsTitle">My designs</h2>
+      <button class="btn small" id="closeDesigns">Close</button>
+    </div>
+    <p id="designsNote"></p>
+    <ul class="saved-list" id="savedList"></ul>
+    <div class="insp-actions">
+      <button class="btn" id="saveCopyBtn">Save a copy</button>
+      <button class="btn" id="exportJsonBtn">Export design file</button>
+      <label class="btn" for="importFile" style="display:inline-block">Import design file</label>
+      <input type="file" id="importFile" accept=".json,application/json" hidden>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="generator.js"></script>
+<script>
+(function () {
+  'use strict';
+  const G = window.RedlineGen;
+  const $ = (s, r) => (r || document).querySelector(s);
+  const DRAFT_KEY = 'redline-ink-draft-v1';
+  const PAD = 48;
+
+  // ------------------------------------------------------------------ helpers
+  const clone = (o) => JSON.parse(JSON.stringify(o));
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const n = (v, d) => { const x = Number(v); return Number.isFinite(x) ? x : (d === undefined ? 0 : d); };
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const newId = () => 'e' + Math.random().toString(36).slice(2, 8);
+  const r1 = (v) => Math.round(v * 10) / 10;
+  const DEG = Math.PI / 180;
+  function normAngle(a) { a %= 360; return a < 0 ? a + 360 : a; }
+  function storageGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function storageSet(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* storage blocked */ } }
+
+  let toastTimer = 0;
+  function toast(msg) {
+    const t = $('#toast'); t.textContent = msg; t.hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 2600);
+  }
+
+  // ------------------------------------------------------------- part makers
+  const COLORS = { light: '#e8f1f6', dim: '#23303a', red: '#ff3d3d', redDim: '#4a1616', muted: '#8fa3af',
+    amber: '#ffb020', orange: '#ff6b3d', green: '#7fd38a', greenDim: '#18291b' };
+
+  const MAKE = {
+    rect: (o) => Object.assign({ type: 'rect', name: 'Panel', x: 0, y: 0, w: 80, h: 40, rotation: 0, color: '#1b252c', opacity: 1 }, o),
+    line: (o) => Object.assign({ type: 'line', name: 'Line', x1: 0, y1: 0, x2: 80, y2: 0, thickness: 2, color: '#7d8f9b', opacity: 1 }, o),
+    arc: (o) => Object.assign({ type: 'arc', name: 'Arc', cx: 320, cy: 200, r: 120, start: 135, sweep: 270, segments: 40,
+      thickness: 10, gap: 2, colorOn: COLORS.light, colorOff: COLORS.dim, colorRedOn: COLORS.red, colorRedOff: COLORS.redDim,
+      redFrom: 1, source: 'static', staticFraction: 1, valueName: '', rangeFrom: 0, rangeTo: 1, opacity: 1 }, o),
+    bar: (o) => Object.assign({ type: 'bar', name: 'Bar', x: 0, y: 0, w: 200, h: 14, segments: 12, gap: 3, direction: 'right',
+      colorOn: COLORS.light, colorOff: COLORS.dim, colorRedOn: COLORS.red, colorRedOff: COLORS.redDim, redFrom: 1,
+      source: 'static', staticFraction: 1, valueName: '', rangeFrom: 0, rangeTo: 1, opacity: 1 }, o),
+    needle: (o) => Object.assign({ type: 'needle', name: 'Needle', cx: 320, cy: 200, length: 100, thickness: 4, start: 135, sweep: 270,
+      color: COLORS.orange, source: 'static', staticFraction: 0, valueName: '', opacity: 1 }, o),
+    text: (o) => Object.assign({ type: 'text', name: 'Text', x: 0, y: 0, w: 120, h: 40, content: 'static', text: 'LABEL', locKey: '',
+      textMetric: 'km/h', textImperial: 'mph', locKeyMetric: '', locKeyImperial: '', font: 'raj', style: 'Medium', size: 24,
+      align: 'center', color: COLORS.light, opacity: 1 }, o),
+    image: (o) => Object.assign({ type: 'image', name: 'Icon', x: 0, y: 0, w: 32, h: 32, rotation: 0, atlas: '', part: '',
+      color: '#ffffff', opacity: 1, preview: '' }, o),
+    numbers: (o) => Object.assign({ type: 'numbers', name: 'Numbers', cx: 320, cy: 200, r: 90, start: 150, sweep: 240,
+      source: 'speed', step: 20, labels: 'E, 1/2, F', turn: 'upright', font: 'raj', style: 'Medium', size: 16,
+      color: COLORS.light, colorRed: COLORS.red, redFrom: 1, opacity: 1 }, o),
+  };
+
+  function part(type, o) { return Object.assign(MAKE[type](o), { id: newId() }); }
+
+  function exampleDesign() {
+    return {
+      version: 1, name: 'Sport cluster (example)', className: 'SportCluster', module: '',
+      width: 640, height: 320, anchor: 'BottomCenter', offsetX: 0, offsetY: -30, scale: 1.6,
+      hook: 'carTuning', hideStock: true, darkWithoutPower: true, powerOff: 'unlit', unlitOpacity: 0.25, offLights: 'unlit',
+      offColor: '#4d545c', units: 'kmh', speedMax: 260,
+      rpmMax: 8000, rpmFromCar: true,
+      gearMap: 'stock',
+      elements: [
+        part('rect', { name: 'Plate', x: 40, y: 50, w: 560, h: 250, color: '#0b1115', opacity: 0.55 }),
+        part('arc', { name: 'Tach', cx: 320, cy: 200, r: 140, start: 150, sweep: 240, segments: 48, thickness: 16, gap: 2,
+          source: 'rpm', redFrom: 0.84 }),
+        part('arc', { name: 'Tick marks', cx: 320, cy: 200, r: 117, start: 135, sweep: 270, segments: 9, thickness: 3, gap: 56,
+          colorOn: '#56656f', colorOff: '#56656f', colorRedOn: '#56656f', colorRedOff: '#56656f', source: 'static' }),
+        part('numbers', { name: 'Tach numbers', cx: 320, cy: 200, r: 98, start: 150, sweep: 240, source: 'rpm', step: 1, size: 15,
+          redFrom: 0.84 }),
+        part('text', { name: 'Speed', x: 240, y: 132, w: 160, h: 70, content: 'speed', font: 'digital', style: 'Regular', size: 64 }),
+        part('text', { name: 'Speed units', x: 270, y: 200, w: 100, h: 22, content: 'units', size: 18, color: COLORS.muted }),
+        part('text', { name: 'Gear label', x: 500, y: 214, w: 60, h: 18, text: 'GEAR', size: 13, color: COLORS.muted }),
+        part('text', { name: 'Gear', x: 500, y: 230, w: 60, h: 56, content: 'gear', style: 'Bold', size: 44 }),
+        part('text', { name: 'Fuel label', x: 64, y: 246, w: 60, h: 18, text: 'FUEL', size: 13, align: 'left', color: COLORS.muted }),
+        part('text', { name: 'Fuel percent', x: 164, y: 246, w: 60, h: 18, content: 'fuelPct', size: 13, align: 'right', color: COLORS.muted }),
+        part('bar', { name: 'Fuel gauge', x: 64, y: 268, w: 160, h: 10, segments: 10, gap: 3, colorOn: COLORS.green,
+          colorOff: COLORS.greenDim, source: 'fuel' }),
+        part('rect', { name: 'Shift light', x: 280, y: 34, w: 80, h: 8, color: '#2a0d0d',
+          light: { when: 'rpmAbove', threshold: 0.92, effect: 'color', onColor: '#ff2a2a', period: 0.6, flag: '' } }),
+        part('text', { name: 'TC light', x: 70, y: 118, w: 46, h: 30, text: 'TC', style: 'Bold', size: 22, color: COLORS.amber,
+          light: { when: 'ct', lamp: 'traction', effect: 'show', period: 0.5, threshold: 0.9, onColor: '#ff2a2a', rate: 4 } }),
+        part('text', { name: 'Low fuel light', x: 64, y: 150, w: 70, h: 24, text: 'LOW FUEL', style: 'Semi-Bold', size: 15,
+          color: COLORS.amber, align: 'left',
+          light: { when: 'ct', lamp: 'fuelLow', threshold: 0.15, effect: 'show', period: 0.6, flag: '', onColor: '#ff2a2a', rate: 4 } }),
+      ],
+    };
+  }
+
+  function blankDesign() {
+    return { version: 1, name: 'New dashboard', className: 'MyDash', module: '', width: 640, height: 320,
+      anchor: 'BottomCenter', offsetX: 0, offsetY: -30, scale: 1.6, hook: 'carTuning', hideStock: true, darkWithoutPower: true,
+      powerOff: 'unlit', unlitOpacity: 0.25, offLights: 'unlit', offColor: '#4d545c', units: 'kmh',
+      speedMax: 260, rpmMax: 8000, rpmFromCar: true, gearMap: 'stock', elements: [] };
+  }
+
+  // ------------------------------------------------------------------ state
+  const state = {
+    design: null,
+    selected: null,
+    tool: 'select',
+    zoom: 'fit',
+    grid: 10, snap: true, showGrid: true, ghosts: true,
+    sim: { speed: 79, rpm: 4300, gear: 3, fuel: 0.58, metric: null, flags: {}, values: {}, lamps: { power: 1, engine: 1 } },
+    tab: 'layers',
+    isExample: false,
+    docId: null,           // saved design document this draft belongs to
+    savedJson: null,       // JSON at last save to the account
+    db: null, uid: null, downloads: null, saved: [],
+  };
+  const history = { past: [], future: [], last: null, timer: 0 };
+
+  function designJson() { return JSON.stringify(state.design); }
+
+  function scheduleHistory() {
+    clearTimeout(history.timer);
+    history.timer = setTimeout(commitHistory, 350);
+  }
+  function commitHistory() {
+    clearTimeout(history.timer);
+    const now = designJson();
+    if (now === history.last) return;
+    if (history.last !== null) {
+      history.past.push(history.last);
+      if (history.past.length > 120) history.past.shift();
+    }
+    history.future = [];
+    history.last = now;
+    saveDraft();
+    renderTop();
+  }
+  function resetHistory() {
+    history.past = []; history.future = []; history.last = designJson();
+  }
+  function undo() {
+    commitHistory();
+    if (!history.past.length) return;
+    history.future.push(history.last);
+    history.last = history.past.pop();
+    state.design = JSON.parse(history.last);
+    if (!findEl(state.selected)) state.selected = null;
+    state.isExample = false;
+    saveDraft(); renderAll();
+  }
+  function redo() {
+    commitHistory();
+    if (!history.future.length) return;
+    history.past.push(history.last);
+    history.last = history.future.pop();
+    state.design = JSON.parse(history.last);
+    if (!findEl(state.selected)) state.selected = null;
+    saveDraft(); renderAll();
+  }
+
+  function changed(opts) {
+    // Called after any edit to the design.
+    opts = opts || {};
+    state.isExample = false;
+    renderStage();
+    if (opts.layers !== false) renderLayers();
+    if (opts.inspector) renderInspector();
+    if (opts.drive) renderDrive();
+    if (state.tab === 'code') renderCodeSoon();
+    renderTop();
+    scheduleHistory();
+  }
+
+  function saveDraft() {
+    storageSet(DRAFT_KEY, JSON.stringify({ design: state.design, docId: state.docId, savedJson: state.savedJson }));
+  }
+
+  function loadDesign(design, opts) {
+    opts = opts || {};
+    state.design = normalizeDesign(design);
+    state.selected = null;
+    state.docId = opts.docId || null;
+    state.savedJson = opts.savedJson || null;
+    state.isExample = !!opts.example;
+    resetHistory();
+    saveDraft();
+    renderAll();
+  }
+
+  // Accepts designs from files or storage, filling anything missing with defaults.
+  function normalizeDesign(raw) {
+    const d = Object.assign(blankDesign(), raw && typeof raw === 'object' ? raw : {});
+    d.width = clamp(n(d.width, 640), 50, 3840); d.height = clamp(n(d.height, 320), 50, 2160);
+    if (!G.ANCHORS[d.anchor]) d.anchor = 'BottomCenter';
+    d.elements = Array.isArray(d.elements) ? d.elements.filter((e) => e && MAKE[e.type]).map((e) => {
+      const base = MAKE[e.type]({});
+      const out = Object.assign(base, e);
+      out.id = typeof e.id === 'string' && e.id ? e.id : newId();
+      if (e.light && typeof e.light === 'object') out.light = Object.assign({ when: '', flag: '', lamp: '', threshold: 0.9, effect: 'show',
+        onColor: '#ff2a2a', period: 0.6, rate: 4 }, e.light);
+      return out;
+    }) : [];
+    const ids = new Set();
+    d.elements.forEach((e) => { if (ids.has(e.id)) e.id = newId(); ids.add(e.id); });
+    return d;
+  }
+
+  const findEl = (id) => state.design.elements.find((e) => e.id === id) || null;
+  const selEl = () => findEl(state.selected);
+
+  function uniqueName(base) {
+    const names = new Set(state.design.elements.map((e) => e.name));
+    if (!names.has(base)) return base;
+    let i = 2; while (names.has(base + ' ' + i)) i++;
+    return base + ' ' + i;
+  }
+
+  function addPart(el) {
+    el.name = uniqueName(el.name);
+    state.design.elements.push(el);
+    state.selected = el.id;
+    changed({ inspector: true, drive: true });
+  }
+
+  // ------------------------------------------------------------ live state
+  function simState() {
+    const d = state.design, s = state.sim;
+    const metric = s.metric === null ? d.units !== 'mph' : s.metric;
+    const mps = s.speed / (metric ? G.MPS_TO_KMH : G.MPS_TO_MPH);
+    return { speedMps: mps, rpm: s.rpm, rpmMax: d.rpmMax, gear: s.gear, fuel: s.fuel, metric: metric,
+      flags: s.flags, values: s.values, lamps: s.lamps };
+  }
+
+  // The Car Tuning lamps the design uses, and the power when the dash goes dark without it.
+  function lampNames() {
+    const set = new Set();
+    state.design.elements.forEach((e) => {
+      if (e.light && e.light.when === 'ct' && G.ctLamp(e.light.lamp)) set.add(e.light.lamp);
+    });
+    if (state.design.hook === 'carTuning' && state.design.darkWithoutPower !== false) set.add('power');
+    return G.CT_LAMPS.map((l) => l.key).filter((k) => set.has(k));
+  }
+
+  // Fed from Car Tuning and dark without power, with the power off in the preview.
+  function dashDark() {
+    const d = state.design;
+    return d.hook === 'carTuning' && d.darkWithoutPower !== false && G.lampOf(simState(), 'power') === 0;
+  }
+
+  function flagNames() {
+    const set = new Set();
+    state.design.elements.forEach((e) => { if (e.light && e.light.when === 'flag' && e.light.flag) set.add(e.light.flag.trim()); });
+    return [...set].filter(Boolean);
+  }
+  function valueNames() {
+    const set = new Set();
+    state.design.elements.forEach((e) => { if (e.source === 'value' && e.valueName) set.add(e.valueName.trim()); });
+    return [...set].filter(Boolean);
+  }
+
+  // ------------------------------------------------------------------ stage
+  const stage = $('#stage');
+  let stageMetrics = { w: 0, h: 0 };
+
+  function snapV(v, e) {
+    if (!state.snap || (e && e.altKey)) return r1(v);
+    return Math.round(v / state.grid) * state.grid;
+  }
+
+  function fontFamily(el) {
+    return el.font === 'digital' ? '"Share Tech Mono", Consolas, monospace' : 'Rajdhani, "Barlow Condensed", sans-serif';
+  }
+  function fontWeight(style) { return { Regular: 400, Medium: 500, 'Semi-Bold': 600, Bold: 700 }[style] || 400; }
+
+  function rectSvg(r, fill, extra) {
+    return '<rect x="' + r1(r.cx - r.w / 2) + '" y="' + r1(r.cy - r.h / 2) + '" width="' + r1(r.w) + '" height="' + r1(r.h)
+      + '" fill="' + fill + '"' + (r.deg ? ' transform="rotate(' + r1(r.deg) + ' ' + r1(r.cx) + ' ' + r1(r.cy) + ')"' : '')
+      + (extra || '') + '/>';
+  }
+
+  function tintFilter(id, hex) {
+    const [r, g, b] = G.rgb(hex);
+    return '<filter id="' + id + '" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="'
+      + (r / 255).toFixed(3) + ' 0 0 0 0 0 ' + (g / 255).toFixed(3) + ' 0 0 0 0 0 ' + (b / 255).toFixed(3) + ' 0 0 0 0 0 1 0"/></filter>';
+  }
+
+  function elementSvg(el, live, defs) {
+    const d = state.design;
+    let fill = el.color;
+    let visible = true, flash = false, blink = 0, litFill = null;
+    // without the car's power: unlit (dimmed, every light off), or hidden
+    const darkNow = dashDark();
+    const unlitNow = darkNow && d.powerOff !== 'hidden';
+    let on = G.lightOn(d, el, live);
+    if (unlitNow && on !== null) on = false;
+    if (on !== null) {
+      const eff = el.light.effect;
+      if (eff === 'show' || eff === 'blink') visible = on;
+      else if (eff === 'hide') visible = !on;
+      else if (eff === 'flash') { visible = on; flash = on; }
+      else if (eff === 'color' && on) { fill = el.light.onColor; litFill = el.light.onColor; }
+      if (on && G.lightBlinks(d, el, live)) blink = eff === 'blink' || eff === 'blinkSteady' ? Math.max(0.5, n(el.light.rate, 4)) : 4;
+    }
+    // a light that is off, shown in the unlit colour as a real dashboard's
+    const unlitOff = on !== null && G.lightOffLook(d, el) === 'unlit';
+    if (unlitOff && !on) { visible = true; fill = G.unlitColorOf(d); }
+    if (darkNow && !unlitNow) visible = false;
+    const op = clamp(n(el.opacity, 1), 0, 1) * (unlitNow ? clamp(n(d.unlitOpacity, 0.25), 0.05, 1) : 1);
+
+    const draw = (fill) => {
+      let body = '';
+      if (el.type === 'rect') {
+        body = rectSvg(G.boxRect(el), esc(fill));
+      } else if (el.type === 'line') {
+        body = rectSvg(G.lineRect(el), esc(fill));
+      } else if (el.type === 'arc' || el.type === 'bar') {
+        const segs = G.segmentsFor(el);
+        const lit = G.litCount(el, G.sourceFraction(d, el, live));
+        const red = G.redFromIndex(el);
+        body = segs.map((s, i) => {
+          const c = i < lit && litFill ? litFill
+            : i >= red ? (i < lit ? el.colorRedOn : el.colorRedOff) : (i < lit ? el.colorOn : el.colorOff);
+          return rectSvg(s, esc(c));
+        }).join('');
+      } else if (el.type === 'needle') {
+        const frac = G.sourceFraction(d, el, live);
+        const deg = n(el.start) + n(el.sweep) * (el.source === 'static' || !el.source ? clamp(n(el.staticFraction), 0, 1) : frac);
+        body = '<rect x="' + r1(el.cx) + '" y="' + r1(el.cy - el.thickness / 2) + '" width="' + r1(el.length) + '" height="'
+          + r1(el.thickness) + '" fill="' + esc(fill) + '" transform="rotate(' + r1(deg) + ' ' + r1(el.cx) + ' ' + r1(el.cy) + ')"/>';
+      } else if (el.type === 'text') {
+        const value = G.textValue(d, el, live);
+        const anchor = el.align === 'left' ? 'start' : el.align === 'right' ? 'end' : 'middle';
+        const x = el.align === 'left' ? el.x : el.align === 'right' ? el.x + el.w : el.x + el.w / 2;
+        body = '<rect x="' + r1(el.x) + '" y="' + r1(el.y) + '" width="' + r1(el.w) + '" height="' + r1(el.h)
+          + '" fill="transparent"/>'
+          + '<text x="' + r1(x) + '" y="' + r1(el.y + el.h / 2) + '" text-anchor="' + anchor + '" dominant-baseline="central"'
+          + ' font-family=\'' + fontFamily(el) + '\' font-weight="' + fontWeight(el.style) + '" font-size="' + n(el.size, 20)
+          + '" fill="' + esc(fill) + '" style="white-space:pre">' + esc(value) + '</text>';
+      } else if (el.type === 'numbers') {
+        body = G.dialNumbers(d, el, live).map((v) => '<text x="' + r1(v.cx) + '" y="' + r1(v.cy) + '" text-anchor="middle"'
+          + ' dominant-baseline="central" font-family=\'' + fontFamily(el) + '\' font-weight="' + fontWeight(el.style) + '" font-size="'
+          + n(el.size, 16) + '" fill="' + esc(v.red ? el.colorRed : (litFill || el.color)) + '"'
+          + (v.deg ? ' transform="rotate(' + r1(v.deg) + ' ' + r1(v.cx) + ' ' + r1(v.cy) + ')"' : '')
+          + ' style="white-space:pre">' + esc(v.text) + '</text>').join('');
+      } else if (el.type === 'image') {
+        const b = G.boxRect(el);
+        const tr = b.deg ? ' transform="rotate(' + r1(b.deg) + ' ' + r1(b.cx) + ' ' + r1(b.cy) + ')"' : '';
+        if (el.preview) {
+          const fid = 'tint-' + el.id + '-' + String(fill).replace(/[^0-9a-z]/gi, '');
+          defs.push(tintFilter(fid, fill));
+          body = '<image href="' + esc(el.preview) + '" x="' + r1(el.x) + '" y="' + r1(el.y) + '" width="' + r1(el.w) + '" height="'
+            + r1(el.h) + '" preserveAspectRatio="none" filter="url(#' + fid + ')"' + tr + '/>';
+        } else {
+          body = '<g' + tr + '><rect x="' + r1(el.x) + '" y="' + r1(el.y) + '" width="' + r1(el.w) + '" height="' + r1(el.h)
+            + '" fill="' + esc(fill) + '" fill-opacity="0.18" stroke="' + esc(fill) + '" stroke-dasharray="3 2" stroke-width="1"/>'
+            + '<text x="' + r1(el.x + el.w / 2) + '" y="' + r1(el.y + el.h / 2) + '" text-anchor="middle" dominant-baseline="central"'
+            + ' font-family="Barlow, sans-serif" font-size="' + Math.max(7, Math.min(12, el.h / 3)) + '" fill="' + esc(fill) + '">'
+            + esc(el.part || 'icon') + '</text></g>';
+        }
+      }
+      return body;
+    };
+    const body = draw(fill);
+    // blinking, a light that is unlit while off alternates between its colour and the unlit colour
+    const base = unlitOff && on && blink ? draw(G.unlitColorOf(d)) : '';
+
+    let style = '';
+    let cls = 'el';
+    let opacity = op;
+    if (!visible) {
+      if (!state.ghosts) return '';
+      opacity = 0.16;
+      cls += ' ghost';
+    }
+    if (flash) { cls += ' flash'; style = 'animation-duration:' + Math.max(0.05, n(el.light.period, 0.6) / 2) + 's;'; }
+    else if (blink && visible) { cls += ' blink'; style = 'animation-duration:' + (1 / blink).toFixed(3) + 's;'; }
+    if (base && visible) {
+      // the unlit colour underneath, the lit light blinking over it
+      return '<g class="el" data-id="' + esc(el.id) + '" opacity="' + opacity + '" cursor="move">' + base
+        + '<g class="blink" style="animation-duration:' + (1 / blink).toFixed(3) + 's;">' + body + '</g>' + hitArea(el) + '</g>';
+    }
+    return '<g class="' + cls + '" data-id="' + esc(el.id) + '" opacity="' + opacity + '"' + (style ? ' style="' + style + '"' : '')
+      + ' cursor="move">' + body + hitArea(el) + '</g>';
+  }
+
+  // Thin parts get a wider invisible target so they are easy to grab.
+  function hitArea(el) {
+    if (el.type === 'line') {
+      return '<line x1="' + el.x1 + '" y1="' + el.y1 + '" x2="' + el.x2 + '" y2="' + el.y2
+        + '" stroke="transparent" stroke-width="12" pointer-events="stroke"/>';
+    }
+    if (el.type === 'needle') {
+      return '<line x1="' + el.cx + '" y1="' + el.cy + '" x2="' + (el.cx + el.length * Math.cos(needleAngle(el) * DEG))
+        + '" y2="' + (el.cy + el.length * Math.sin(needleAngle(el) * DEG)) + '" stroke="transparent" stroke-width="12" pointer-events="stroke"/>';
+    }
+    if (el.type === 'arc') {
+      return '<path d="' + arcPath(el.cx, el.cy, el.r, el.start, el.sweep) + '" fill="none" stroke="transparent" stroke-width="'
+        + Math.max(14, n(el.thickness) + 8) + '" pointer-events="stroke"/>';
+    }
+    if (el.type === 'numbers') {
+      return '<path d="' + arcPath(el.cx, el.cy, el.r, el.start, el.sweep) + '" fill="none" stroke="transparent" stroke-width="'
+        + Math.max(14, n(el.size, 16) * 1.5) + '" pointer-events="stroke"/>';
+    }
+    return '';
+  }
+
+  function needleAngle(el) {
+    const frac = (el.source === 'static' || !el.source) ? clamp(n(el.staticFraction), 0, 1) : G.sourceFraction(state.design, el, simState());
+    return n(el.start) + n(el.sweep) * frac;
+  }
+
+  function arcPath(cx, cy, r, start, sweep) {
+    const s = Math.max(-359.9, Math.min(359.9, sweep));
+    const a0 = start * DEG, a1 = (start + s) * DEG;
+    const large = Math.abs(s) > 180 ? 1 : 0, dir = s >= 0 ? 1 : 0;
+    return 'M ' + r1(cx + r * Math.cos(a0)) + ' ' + r1(cy + r * Math.sin(a0)) + ' A ' + r + ' ' + r + ' 0 ' + large + ' ' + dir + ' '
+      + r1(cx + r * Math.cos(a1)) + ' ' + r1(cy + r * Math.sin(a1));
+  }
+
+  function handlesFor(el) {
+    const h = [];
+    if (el.type === 'rect' || el.type === 'image' || el.type === 'text' || el.type === 'bar') {
+      h.push(['nw', el.x, el.y], ['ne', el.x + el.w, el.y], ['sw', el.x, el.y + el.h], ['se', el.x + el.w, el.y + el.h]);
+    } else if (el.type === 'line') {
+      h.push(['p1', el.x1, el.y1], ['p2', el.x2, el.y2]);
+    } else if (el.type === 'arc' || el.type === 'numbers') {
+      const mid = (el.start + el.sweep / 2) * DEG;
+      h.push(['radius', el.cx + el.r * Math.cos(mid), el.cy + el.r * Math.sin(mid)]);
+      h.push(['astart', el.cx + el.r * Math.cos(el.start * DEG), el.cy + el.r * Math.sin(el.start * DEG)]);
+      h.push(['aend', el.cx + el.r * Math.cos((el.start + el.sweep) * DEG), el.cy + el.r * Math.sin((el.start + el.sweep) * DEG)]);
+    } else if (el.type === 'needle') {
+      const a = needleAngle(el) * DEG;
+      h.push(['tip', el.cx + el.length * Math.cos(a), el.cy + el.length * Math.sin(a)]);
+      h.push(['astart', el.cx + el.length * Math.cos(el.start * DEG), el.cy + el.length * Math.sin(el.start * DEG)]);
+      h.push(['aend', el.cx + el.length * Math.cos((el.start + el.sweep) * DEG), el.cy + el.length * Math.sin((el.start + el.sweep) * DEG)]);
+    }
+    return h;
+  }
+
+  function selectionSvg(el) {
+    let outline = '';
+    const sw = 1.2 / zoomFactor();
+    const stroke = 'stroke="#46c0ee" stroke-width="' + sw + '" fill="none" stroke-dasharray="' + (4 / zoomFactor()) + ' ' + (3 / zoomFactor()) + '"';
+    if (el.type === 'rect' || el.type === 'image') {
+      const b = G.boxRect(el);
+      outline = '<rect x="' + (b.cx - b.w / 2) + '" y="' + (b.cy - b.h / 2) + '" width="' + b.w + '" height="' + b.h + '" ' + stroke
+        + (b.deg ? ' transform="rotate(' + b.deg + ' ' + b.cx + ' ' + b.cy + ')"' : '') + '/>';
+    } else if (el.type === 'text' || el.type === 'bar') {
+      outline = '<rect x="' + el.x + '" y="' + el.y + '" width="' + el.w + '" height="' + el.h + '" ' + stroke + '/>';
+    } else if (el.type === 'line') {
+      outline = '<line x1="' + el.x1 + '" y1="' + el.y1 + '" x2="' + el.x2 + '" y2="' + el.y2 + '" ' + stroke + '/>';
+    } else if (el.type === 'arc' || el.type === 'numbers') {
+      outline = '<path d="' + arcPath(el.cx, el.cy, el.r, el.start, el.sweep) + '" ' + stroke + '/>'
+        + '<circle cx="' + el.cx + '" cy="' + el.cy + '" r="' + (3 / zoomFactor()) + '" fill="#46c0ee"/>';
+    } else if (el.type === 'needle') {
+      outline = '<path d="' + arcPath(el.cx, el.cy, el.length, el.start, el.sweep) + '" ' + stroke + '/>'
+        + '<circle cx="' + el.cx + '" cy="' + el.cy + '" r="' + (3 / zoomFactor()) + '" fill="#46c0ee"/>';
+    }
+    const hs = 7 / zoomFactor();
+    const handles = handlesFor(el).map(([k, x, y]) => {
+      const round = k === 'astart' || k === 'aend';
+      return round
+        ? '<circle class="handle" data-handle="' + k + '" cx="' + x + '" cy="' + y + '" r="' + (hs * 0.62) + '" fill="#46c0ee" stroke="#06080a" stroke-width="' + sw + '" cursor="crosshair"/>'
+        : '<rect class="handle" data-handle="' + k + '" x="' + (x - hs / 2) + '" y="' + (y - hs / 2) + '" width="' + hs + '" height="' + hs
+          + '" fill="#06080a" stroke="#46c0ee" stroke-width="' + (sw * 1.4) + '" cursor="' + (k === 'nw' || k === 'se' ? 'nwse-resize' : k === 'ne' || k === 'sw' ? 'nesw-resize' : 'crosshair') + '"/>';
+    }).join('');
+    return '<g class="selection">' + outline + handles + '</g>';
+  }
+
+  function zoomFactor() {
+    if (!stageMetrics.w) return 1;
+    return stageMetrics.w / (state.design.width + PAD * 2);
+  }
+
+  function renderStage() {
+    const d = state.design;
+    const W = d.width, H = d.height;
+    const live = simState();
+    const defs = [];
+    const g = state.grid;
+    const grid = state.showGrid
+      ? '<pattern id="gridMinor" width="' + g + '" height="' + g + '" patternUnits="userSpaceOnUse"><path d="M ' + g + ' 0 L 0 0 0 ' + g
+        + '" fill="none" stroke="#10161a" stroke-width="1"/></pattern>'
+        + '<pattern id="gridMajor" width="' + g * 5 + '" height="' + g * 5 + '" patternUnits="userSpaceOnUse"><rect width="' + g * 5
+        + '" height="' + g * 5 + '" fill="url(#gridMinor)"/><path d="M ' + g * 5 + ' 0 L 0 0 0 ' + g * 5
+        + '" fill="none" stroke="#1a2228" stroke-width="1"/></pattern>' : '';
+    const els = d.elements.map((el) => elementSvg(el, live, defs)).join('');
+    const sel = selEl();
+    stage.setAttribute('viewBox', (-PAD) + ' ' + (-PAD) + ' ' + (W + PAD * 2) + ' ' + (H + PAD * 2));
+    stage.innerHTML = '<defs>' + grid + defs.join('') + '</defs>'
+      + '<rect id="bg" x="' + (-PAD) + '" y="' + (-PAD) + '" width="' + (W + PAD * 2) + '" height="' + (H + PAD * 2) + '" fill="#06080a"/>'
+      + '<rect x="0" y="0" width="' + W + '" height="' + H + '" fill="' + (state.showGrid ? 'url(#gridMajor)' : 'none') + '" stroke="#2b353c" stroke-width="1" pointer-events="none"/>'
+      + '<text x="0" y="-10" font-family="JetBrains Mono, monospace" font-size="11" fill="#5d6d77" pointer-events="none">'
+      + W + ' × ' + H + '  ·  anchored ' + esc(d.anchor) + '</text>'
+      + els + (sel ? selectionSvg(sel) : '') + '<g id="draft"></g>';
+    applyZoom();
+    $('#exampleChip').hidden = !state.isExample;
+    const hints = { select: 'Click a part to select it. Drag to move; drag the handles to resize.',
+      rect: 'Drag to draw a panel.', line: 'Drag from one end to the other.', arc: 'Drag from the centre outwards.',
+      bar: 'Drag to draw a segmented bar.', needle: 'Drag from the pivot to the tip.', text: 'Drag to draw a text box.',
+      image: 'Drag to draw an icon box.', numbers: 'Drag from the centre outwards.' };
+    $('#stageHint').textContent = hints[state.tool] || '';
+  }
+
+  function applyZoom() {
+    const d = state.design;
+    const vbW = d.width + PAD * 2, vbH = d.height + PAD * 2;
+    if (state.zoom === 'fit') {
+      stage.classList.remove('zoomed');
+      stage.style.width = '100%'; stage.style.height = 'auto';
+    } else {
+      stage.classList.add('zoomed');
+      const z = Number(state.zoom);
+      stage.style.width = (vbW * z) + 'px'; stage.style.height = (vbH * z) + 'px';
+    }
+    const box = stage.getBoundingClientRect();
+    stageMetrics = { w: box.width || vbW, h: box.height || vbH };
+  }
+
+  function toDesign(evt) {
+    const pt = stage.createSVGPoint();
+    pt.x = evt.clientX; pt.y = evt.clientY;
+    const m = stage.getScreenCTM();
+    if (!m) return { x: 0, y: 0 };
+    const p = pt.matrixTransform(m.inverse());
+    return { x: p.x, y: p.y };
+  }
+
+  let drag = null;
+
+  stage.addEventListener('pointerdown', (evt) => {
+    if (evt.button !== 0) return;
+    const p = toDesign(evt);
+    const handle = evt.target.closest('[data-handle]');
+    const g = evt.target.closest('[data-id]');
+    if (state.tool === 'select') {
+      if (handle && selEl()) {
+        drag = { mode: 'handle', key: handle.getAttribute('data-handle'), start: p, orig: clone(selEl()) };
+      } else if (g) {
+        const id = g.getAttribute('data-id');
+        if (state.selected !== id) { state.selected = id; renderStage(); renderInspector(); renderLayers(); }
+        drag = { mode: 'move', start: p, orig: clone(selEl()), moved: false };
+      } else {
+        if (state.selected) { state.selected = null; renderStage(); renderInspector(); renderLayers(); }
+        return;
+      }
+    } else {
+      drag = { mode: 'create', type: state.tool, start: { x: snapV(p.x, evt), y: snapV(p.y, evt) }, el: null };
+    }
+    stage.setPointerCapture(evt.pointerId);
+    evt.preventDefault();
+  });
+
+  stage.addEventListener('pointermove', (evt) => {
+    if (!drag) return;
+    const p = toDesign(evt);
+    if (drag.mode === 'move') {
+      const el = selEl(); if (!el) return;
+      let dx = p.x - drag.start.x, dy = p.y - drag.start.y;
+      if (!drag.moved && Math.hypot(dx, dy) < 2 / zoomFactor()) return;
+      drag.moved = true;
+      const o = drag.orig;
+      const anchorX = o.x ?? o.cx ?? o.x1, anchorY = o.y ?? o.cy ?? o.y1;
+      dx = snapV(anchorX + dx, evt) - anchorX; dy = snapV(anchorY + dy, evt) - anchorY;
+      if ('x' in o) { el.x = r1(o.x + dx); el.y = r1(o.y + dy); }
+      if ('cx' in o) { el.cx = r1(o.cx + dx); el.cy = r1(o.cy + dy); }
+      if ('x1' in o) { el.x1 = r1(o.x1 + dx); el.y1 = r1(o.y1 + dy); el.x2 = r1(o.x2 + dx); el.y2 = r1(o.y2 + dy); }
+      renderStage();
+    } else if (drag.mode === 'handle') {
+      dragHandle(selEl(), drag, p, evt);
+      renderStage();
+    } else if (drag.mode === 'create') {
+      const s = drag.start, q = { x: snapV(p.x, evt), y: snapV(p.y, evt) };
+      if (!drag.el && Math.hypot(q.x - s.x, q.y - s.y) < 4) return;
+      if (!drag.el) {
+        drag.el = createAt(drag.type, s);
+        state.design.elements.push(drag.el);
+        state.selected = drag.el.id;
+      }
+      shapeFromDrag(drag.el, s, q);
+      renderStage();
+    }
+  });
+
+  function endDrag(evt) {
+    if (!drag) return;
+    if (drag.mode === 'create') {
+      if (!drag.el) {
+        const el = createAt(drag.type, drag.start);
+        defaultSize(el, drag.start);
+        addPart(el);
+      } else {
+        drag.el.name = uniqueName(drag.el.name);
+        changed({ inspector: true, drive: true });
+      }
+      setTool('select');
+    } else if (drag.mode === 'move' && drag.moved) {
+      changed({ inspector: true });
+    } else if (drag.mode === 'handle') {
+      changed({ inspector: true });
+    }
+    drag = null;
+    try { stage.releasePointerCapture(evt.pointerId); } catch (e) { /* not captured */ }
+  }
+  stage.addEventListener('pointerup', endDrag);
+  stage.addEventListener('pointercancel', endDrag);
+
+  const TYPE_NAMES = { rect: 'Panel', line: 'Line', arc: 'Arc', bar: 'Bar', needle: 'Needle', text: 'Text', image: 'Icon',
+    numbers: 'Numbers' };
+
+  function createAt(type, s) {
+    const el = part(type, { name: TYPE_NAMES[type] });
+    if (type === 'line') Object.assign(el, { x1: s.x, y1: s.y, x2: s.x, y2: s.y });
+    else if (type === 'arc' || type === 'needle' || type === 'numbers') Object.assign(el, { cx: s.x, cy: s.y });
+    else Object.assign(el, { x: s.x, y: s.y });
+    return el;
+  }
+
+  function defaultSize(el, s) {
+    if (el.type === 'line') { el.x2 = s.x + 100; }
+    else if (el.type === 'arc') { el.r = 100; }
+    else if (el.type === 'numbers') { el.r = 90; }
+    else if (el.type === 'needle') { el.length = 90; }
+    else {
+      const sizes = { rect: [80, 40], bar: [200, 14], text: [120, 40], image: [32, 32] }[el.type];
+      el.w = sizes[0]; el.h = sizes[1];
+    }
+  }
+
+  function shapeFromDrag(el, s, q) {
+    if (el.type === 'line') { el.x2 = q.x; el.y2 = q.y; }
+    else if (el.type === 'arc' || el.type === 'numbers') { el.r = r1(Math.max(6, Math.hypot(q.x - s.x, q.y - s.y))); }
+    else if (el.type === 'needle') { el.length = r1(Math.max(6, Math.hypot(q.x - s.x, q.y - s.y))); }
+    else {
+      el.x = Math.min(s.x, q.x); el.y = Math.min(s.y, q.y);
+      el.w = Math.max(2, Math.abs(q.x - s.x)); el.h = Math.max(2, Math.abs(q.y - s.y));
+    }
+  }
+
+  function dragHandle(el, dr, p, evt) {
+    if (!el) return;
+    const o = dr.orig;
+    const x = snapV(p.x, evt), y = snapV(p.y, evt);
+    if (dr.key === 'nw' || dr.key === 'ne' || dr.key === 'sw' || dr.key === 'se') {
+      let x0 = o.x, y0 = o.y, x1 = o.x + o.w, y1 = o.y + o.h;
+      if (dr.key.includes('w')) x0 = x; else x1 = x;
+      if (dr.key.includes('n')) y0 = y; else y1 = y;
+      el.x = Math.min(x0, x1); el.y = Math.min(y0, y1);
+      el.w = Math.max(2, Math.abs(x1 - x0)); el.h = Math.max(2, Math.abs(y1 - y0));
+    } else if (dr.key === 'p1') { el.x1 = x; el.y1 = y; }
+    else if (dr.key === 'p2') { el.x2 = x; el.y2 = y; }
+    else if (dr.key === 'radius') { el.r = r1(Math.max(6, Math.hypot(p.x - o.cx, p.y - o.cy))); }
+    else if (dr.key === 'tip') { el.length = r1(Math.max(6, Math.hypot(p.x - o.cx, p.y - o.cy))); }
+    else if (dr.key === 'astart' || dr.key === 'aend') {
+      let a = Math.atan2(p.y - o.cy, p.x - o.cx) / DEG;
+      if (!evt.altKey) a = Math.round(a / 5) * 5;
+      if (dr.key === 'astart') {
+        const end = o.start + o.sweep;
+        let sweep = o.sweep >= 0 ? normAngle(end - a) : -normAngle(a - end);
+        if (Math.abs(sweep) < 1) sweep = o.sweep >= 0 ? 360 : -360;
+        el.start = r1(normAngle(a)); el.sweep = r1(sweep);
+      } else {
+        let sweep = o.sweep >= 0 ? normAngle(a - o.start) : -normAngle(o.start - a);
+        if (Math.abs(sweep) < 1) sweep = o.sweep >= 0 ? 360 : -360;
+        el.sweep = r1(sweep);
+      }
+    }
+  }
+
+  // ------------------------------------------------------------------- tools
+  const TOOLS = [
+    ['select', 'Select', 'V', '<path d="M5 3l12 8-6 1.5L8 19z"/>'],
+    ['rect', 'Panel', 'R', '<rect x="4" y="6" width="16" height="12" rx="1"/>'],
+    ['line', 'Line', 'L', '<path d="M4 18L20 6"/>'],
+    ['arc', 'Arc', 'A', '<path d="M5 17a8 8 0 1 1 14 0"/><path d="M12 12l4-4"/>'],
+    ['bar', 'Bar', 'B', '<rect x="3" y="10" width="4" height="5"/><rect x="10" y="10" width="4" height="5"/><rect x="17" y="10" width="4" height="5"/>'],
+    ['needle', 'Needle', 'N', '<circle cx="8" cy="16" r="2"/><path d="M9.5 14.5L19 5"/>'],
+    ['numbers', 'Numbers', 'D', '<path d="M4 18a8 8 0 1 1 16 0"/><path d="M7 13.5h2M11 9.5v2M15 13.5h2"/>'],
+    ['text', 'Text', 'T', '<path d="M5 6h14M12 6v13M9 19h6"/>'],
+    ['image', 'Icon', 'I', '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 15l3-3 2 2 3-4 2 5"/>'],
+  ];
+
+  function renderTools() {
+    $('#tools').innerHTML = TOOLS.map(([k, label, key, icon]) => '<button class="tool" data-tool="' + k + '" aria-pressed="'
+      + (state.tool === k) + '" title="' + label + ' (' + key + ')"><svg viewBox="0 0 24 24" aria-hidden="true">' + icon + '</svg>'
+      + label + ' <kbd>' + key + '</kbd></button>').join('');
+  }
+  $('#tools').addEventListener('click', (e) => { const b = e.target.closest('[data-tool]'); if (b) setTool(b.dataset.tool); });
+
+  function setTool(t) {
+    state.tool = t;
+    stage.style.cursor = t === 'select' ? 'default' : 'crosshair';
+    renderTools(); renderStage();
+  }
+
+  // Parts that already know what they are.
+  const PRESETS = [
+    ['tach', 'Tachometer arc', 'RPM', () => part('arc', { name: 'Tach', cx: center().x, cy: center().y + 40, r: 120, start: 150, sweep: 240,
+      segments: 40, thickness: 14, gap: 2, source: 'rpm', redFrom: 0.85 })],
+    ['speedo', 'Speed number', 'speed', () => part('text', { name: 'Speed', x: center().x - 80, y: center().y - 35, w: 160, h: 70,
+      content: 'speed', font: 'digital', style: 'Regular', size: 60 })],
+    ['units', 'Speed units', 'km/h', () => part('text', { name: 'Speed units', x: center().x - 50, y: center().y + 40, w: 100, h: 22,
+      content: 'units', size: 18, color: COLORS.muted })],
+    ['gear', 'Gear', 'gear', () => part('text', { name: 'Gear', x: center().x + 140, y: center().y, w: 60, h: 56, content: 'gear',
+      style: 'Bold', size: 44 })],
+    ['needle', 'Speed needle', 'speed', () => part('needle', { name: 'Speed needle', cx: center().x, cy: center().y + 40, length: 100,
+      start: 150, sweep: 240, source: 'speed' })],
+    ['speednums', 'Speedo numbers', 'speed', () => part('numbers', { name: 'Speed numbers', cx: center().x, cy: center().y + 40,
+      r: 78, start: 150, sweep: 240, source: 'speed', step: 20, size: 16 })],
+    ['tachnums', 'Tach numbers', 'RPM', () => part('numbers', { name: 'Tach numbers', cx: center().x, cy: center().y + 40,
+      r: 98, start: 150, sweep: 240, source: 'rpm', step: 1, size: 16, redFrom: 0.85 })],
+    ['fuel', 'Fuel bar', 'fuel', () => part('bar', { name: 'Fuel gauge', x: 40, y: state.design.height - 40, w: 160, h: 10,
+      segments: 10, gap: 3, colorOn: COLORS.green, colorOff: COLORS.greenDim, source: 'fuel' })],
+    ['warn', 'Warning light', 'lamp', () => part('text', { name: 'Warning light', x: 40, y: 40, w: 46, h: 30, text: 'TC', style: 'Bold',
+      size: 22, color: COLORS.amber, light: { when: 'ct', lamp: 'traction', effect: 'show', period: 0.5, threshold: 0.9, onColor: '#ff2a2a', rate: 4 } })],
+    ['shiftring', 'Shift light ring', 'RPM', () => part('arc', { name: 'Shift ring', cx: center().x, cy: center().y + 40, r: 150,
+      start: 150, sweep: 240, segments: 12, thickness: 10, gap: 4, source: 'rpm', rangeFrom: 0.75, rangeTo: 0.95, redFrom: 0.67,
+      colorOn: COLORS.green, colorOff: COLORS.greenDim, colorRedOn: COLORS.red, colorRedOff: COLORS.redDim,
+      light: { when: 'rpmAbove', threshold: 0.95, effect: 'blinkSteady', rate: 4, period: 0.6, flag: '', lamp: '', onColor: '#ff2a2a' } })],
+    ['shift', 'Shift light', 'RPM', () => part('rect', { name: 'Shift light', x: center().x - 40, y: 20, w: 80, h: 8, color: '#2a0d0d',
+      light: { when: 'rpmAbove', threshold: 0.92, effect: 'color', onColor: '#ff2a2a', period: 0.6, flag: '' } })],
+  ];
+  function center() { return { x: Math.round(state.design.width / 2), y: Math.round(state.design.height / 2) }; }
+
+  function renderPresets() {
+    $('#presets').innerHTML = PRESETS.map(([k, label, tag]) => '<button class="preset" data-preset="' + k + '">' + label
+      + ' <span>' + tag + '</span></button>').join('');
+  }
+  $('#presets').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-preset]'); if (!b) return;
+    const p = PRESETS.find((x) => x[0] === b.dataset.preset);
+    if (p) { addPart(p[3]()); setTool('select'); }
+  });
+
+  // --------------------------------------------------------------- inspector
+  const SOURCE_OPTIONS = {
+    arc: [['static', 'Decoration (always drawn)'], ['rpm', 'Tachometer: follows RPM'], ['speed', 'Speedometer: follows speed'],
+      ['fuel', 'Fuel gauge'], ['value', 'Custom value from your mod']],
+    needle: [['static', 'Fixed pointer'], ['speed', 'Speed needle'], ['rpm', 'RPM needle'], ['fuel', 'Fuel needle'],
+      ['value', 'Custom value from your mod']],
+    text: [['static', 'Label'], ['speed', 'Speed number'], ['rpm', 'RPM number'], ['rpm1000', 'RPM in thousands'], ['gear', 'Gear'],
+      ['fuelPct', 'Fuel percent'], ['units', 'Speed units (km/h or mph)']],
+  };
+  SOURCE_OPTIONS.numbers = [['speed', 'Speed: 0 to full-scale speed'], ['rpm', 'RPM in thousands'], ['labels', 'My own labels']];
+  const NUMBERS_HELP = {
+    speed: 'From 0 to the full-scale speed in the design settings, where a speed needle points at full. The same numbers serve km/h and mph, as the needle does.',
+    rpm: 'In thousands, from 0 to full-scale RPM. In game they are laid out again for each car\'s own full-scale RPM, as the tach and its needle.',
+    labels: 'Your own labels, spread evenly from zero to full, such as E, 1/2, F on a fuel gauge.',
+  };
+  SOURCE_OPTIONS.bar = SOURCE_OPTIONS.arc.map((o) => o[0] === 'rpm' ? ['rpm', 'Tachometer bar: follows RPM'] : o[0] === 'speed' ? ['speed', 'Speed bar'] : o);
+
+  const ROLE_HELP = {
+    static: 'Drawn as it is. Nothing in the game moves it.',
+    rpm: 'Lights up, or turns, with engine RPM. Full scale is the car\'s own maximum RPM.',
+    speed: 'Follows speed. Full scale is set in the design settings.',
+    fuel: 'Follows the fuel level your mod sends with SetFuel.',
+    value: 'Follows a value your mod sends with SetValue(name, 0..1).',
+    rpm1000: 'Shows RPM divided by 1000, one decimal place.',
+    gear: 'Shows R, N or the gear number.',
+    fuelPct: 'Shows the fuel your mod sends, as a percent.',
+    units: 'Shows km/h or mph, matching the speed numbers.',
+  };
+
+  function field(spec, el) {
+    const v = el[spec.key];
+    const id = 'f-' + spec.key;
+    const wide = spec.wide ? ' wide' : '';
+    if (spec.type === 'number') {
+      return '<label class="field' + wide + '"><span>' + spec.label + '</span><input type="number" id="' + id + '" data-key="' + spec.key
+        + '" value="' + esc(v) + '" step="' + (spec.step || 1) + '"' + (spec.min !== undefined ? ' min="' + spec.min + '"' : '')
+        + (spec.max !== undefined ? ' max="' + spec.max + '"' : '') + '></label>';
+    }
+    if (spec.type === 'text') {
+      return '<label class="field' + wide + '"><span>' + spec.label + '</span><input type="text" id="' + id + '" data-key="' + spec.key
+        + '" value="' + esc(v) + '" spellcheck="false"' + (spec.placeholder ? ' placeholder="' + esc(spec.placeholder) + '"' : '') + '>'
+        + (spec.help ? '<span class="help">' + spec.help + '</span>' : '') + '</label>';
+    }
+    if (spec.type === 'color') {
+      return '<div class="field' + wide + '"><span>' + spec.label + '</span><div class="colorrow"><input type="color" id="' + id + '" data-key="'
+        + spec.key + '" value="' + esc(v) + '" aria-label="' + spec.label + '"><input type="text" data-key="' + spec.key + '" data-hex value="'
+        + esc(v) + '" spellcheck="false" aria-label="' + spec.label + ' hex"></div></div>';
+    }
+    if (spec.type === 'select') {
+      return '<label class="field' + wide + '"><span>' + spec.label + '</span><select id="' + id + '" data-key="' + spec.key + '"'
+        + (spec.rebuild ? ' data-rebuild' : '') + '>' + spec.options.map(([k, l]) => '<option value="' + esc(k) + '"'
+          + (String(v) === String(k) ? ' selected' : '') + '>' + esc(l) + '</option>').join('') + '</select>'
+        + (spec.help ? '<span class="help">' + spec.help + '</span>' : '') + '</label>';
+    }
+    if (spec.type === 'percent') {
+      const pct = Math.round(n(v) * 100);
+      return '<div class="field' + wide + '"><span>' + spec.label + '</span><div class="rangerow"><input type="range" id="' + id
+        + '" data-key="' + spec.key + '"' + (spec.rebuild ? ' data-rebuild' : '') + ' data-percent min="' + (spec.min ?? 0) + '" max="' + (spec.max ?? 100) + '" step="1" value="' + pct
+        + '" aria-label="' + spec.label + '"><output>' + (spec.offAt !== undefined && pct >= spec.offAt ? 'off' : pct + '%') + '</output></div>'
+        + (spec.help ? '<span class="help">' + spec.help + '</span>' : '') + '</div>';
+    }
+    if (spec.type === 'check') {
+      return '<label class="field check' + wide + '"><input type="checkbox" id="' + id + '" data-key="' + spec.key + '"'
+        + (v ? ' checked' : '') + (spec.rebuild ? ' data-rebuild' : '') + '><span>' + spec.label + '</span></label>';
+    }
+    return '';
+  }
+
+  const sect = (t) => '<div class="sect">' + t + '</div>';
+
+  function elementFields(el) {
+    const F = [];
+    const pos = (keys) => keys.forEach(([k, l, step]) => F.push(field({ key: k, label: l, type: 'number', step: step || 1 }, el)));
+    F.push(field({ key: 'name', label: 'Name', type: 'text', wide: true, help: 'Becomes the field name in the script.' }, el));
+
+    if (SOURCE_OPTIONS[el.type]) {
+      const key = el.type === 'text' ? 'content' : 'source';
+      const cur = el[key] || 'static';
+      F.push('<div class="role"><span>What is this?</span><select data-key="' + key + '" data-rebuild aria-label="What is this?">'
+        + SOURCE_OPTIONS[el.type].map(([k, l]) => '<option value="' + k + '"' + (cur === k ? ' selected' : '') + '>' + l + '</option>').join('')
+        + '</select><span class="help">' + ((el.type === 'numbers' ? NUMBERS_HELP : ROLE_HELP)[cur] || '') + '</span></div>');
+      if (el.type !== 'text' && cur === 'value') {
+        F.push(field({ key: 'valueName', label: 'Value name', type: 'text', wide: true, placeholder: 'boost',
+          help: 'Your mod calls SetValue(n"' + esc(el.valueName || 'boost') + '", 0..1).' }, el));
+      }
+      if (el.type !== 'text' && cur === 'static') {
+        F.push(field({ key: 'staticFraction', label: el.type === 'needle' ? 'Pointer position' : 'Lit amount', type: 'percent', wide: true }, el));
+      }
+      if ((el.type === 'arc' || el.type === 'bar') && cur !== 'static') {
+        F.push(field({ key: 'rangeFrom', label: 'Starts at', type: 'percent', wide: true,
+          help: 'Share of the reading where the first segment lights. Above 0% the gauge covers only part of the range, as a shift light covers the top of the revs.' }, el));
+        F.push(field({ key: 'rangeTo', label: 'Full at', type: 'percent', wide: true, help: 'Share of the reading where every segment is lit.' }, el));
+      }
+    }
+
+    if (el.type === 'rect' || el.type === 'image') {
+      F.push(sect('Position'));
+      pos([['x', 'X'], ['y', 'Y'], ['w', 'Width'], ['h', 'Height'], ['rotation', 'Rotation °']]);
+    } else if (el.type === 'line') {
+      F.push(sect('Position'));
+      pos([['x1', 'Start X'], ['y1', 'Start Y'], ['x2', 'End X'], ['y2', 'End Y'], ['thickness', 'Thickness', 0.5]]);
+    } else if (el.type === 'arc') {
+      F.push(sect('Shape'));
+      pos([['cx', 'Centre X'], ['cy', 'Centre Y'], ['r', 'Radius'], ['thickness', 'Thickness', 0.5], ['start', 'Start angle °'],
+        ['sweep', 'Sweep °'], ['segments', 'Segments'], ['gap', 'Gap', 0.5]]);
+      F.push('<p class="help" style="grid-column:1/-1;margin:0">Angles run clockwise from 3 o\'clock: 90° is straight down, 270° is straight up.</p>');
+    } else if (el.type === 'bar') {
+      F.push(sect('Shape'));
+      pos([['x', 'X'], ['y', 'Y'], ['w', 'Width'], ['h', 'Height'], ['segments', 'Segments'], ['gap', 'Gap', 0.5]]);
+      F.push(field({ key: 'direction', label: 'Fills toward', type: 'select', options: [['right', 'Right'], ['left', 'Left'], ['up', 'Up'], ['down', 'Down']] }, el));
+    } else if (el.type === 'needle') {
+      F.push(sect('Shape'));
+      pos([['cx', 'Pivot X'], ['cy', 'Pivot Y'], ['length', 'Length'], ['thickness', 'Thickness', 0.5], ['start', 'Angle at zero °'],
+        ['sweep', 'Sweep to full °']]);
+    } else if (el.type === 'numbers') {
+      if (el.source === 'labels') {
+        F.push(field({ key: 'labels', label: 'Labels', type: 'text', wide: true, placeholder: 'E, 1/2, F',
+          help: 'Separated by commas, spread evenly from zero to full.' }, el));
+      } else {
+        F.push(field({ key: 'step', label: el.source === 'rpm' ? 'Every (thousands)' : 'Every', type: 'number',
+          min: el.source === 'rpm' ? 1 : 0.1, step: el.source === 'rpm' ? 1 : 5 }, el));
+      }
+      F.push(field({ key: 'turn', label: 'Numbers stand', type: 'select', options: [['upright', 'Upright'], ['along', 'Along the arc']] }, el));
+      const dials = state.design.elements.filter((e) => e !== el && (e.type === 'arc' || e.type === 'needle'));
+      if (dials.length) {
+        F.push('<label class="field wide"><span>Line up with</span><select data-lineup data-rebuild>'
+          + '<option value="">Pick a needle or an arc…</option>'
+          + dials.map((e) => '<option value="' + esc(e.id) + '">' + esc(TYPE_NAMES[e.type] + ': ' + e.name) + '</option>').join('')
+          + '</select><span class="help">Copies its centre, angle at zero and sweep, so each number sits where the needle points at it.</span></label>');
+      }
+      F.push(sect('Shape'));
+      pos([['cx', 'Centre X'], ['cy', 'Centre Y'], ['r', 'Radius'], ['start', 'Angle at zero °'], ['sweep', 'Sweep to full °']]);
+      F.push('<p class="help" style="grid-column:1/-1;margin:0">Angles run clockwise from 3 o\'clock: 90° is straight down, 270° is straight up. The radius is where the middle of each number sits.</p>');
+      F.push(sect('Type'));
+      F.push(field({ key: 'font', label: 'Font', type: 'select', rebuild: true, options: Object.entries(G.FONTS).map(([k, f]) => [k, f.label]) }, el));
+      F.push(field({ key: 'style', label: 'Style', type: 'select', options: (G.FONTS[el.font] || G.FONTS.raj).styles.map((s) => [s, s]) }, el));
+      F.push(field({ key: 'size', label: 'Size', type: 'number', min: 4 }, el));
+    } else if (el.type === 'text') {
+      if (!el.content || el.content === 'static') {
+        F.push(field({ key: 'text', label: 'Text', type: 'text', wide: true }, el));
+        F.push(field({ key: 'locKey', label: 'Localization key', type: 'text', wide: true, placeholder: 'CarTuning-Fuel',
+          help: 'Optional. The text above is the English fallback.' }, el));
+      }
+      if (el.content === 'units') {
+        F.push(field({ key: 'textMetric', label: 'Metric text', type: 'text' }, el));
+        F.push(field({ key: 'textImperial', label: 'Imperial text', type: 'text' }, el));
+        F.push(field({ key: 'locKeyMetric', label: 'Metric key', type: 'text', placeholder: 'optional' }, el));
+        F.push(field({ key: 'locKeyImperial', label: 'Imperial key', type: 'text', placeholder: 'optional' }, el));
+      }
+      F.push(sect('Box'));
+      pos([['x', 'X'], ['y', 'Y'], ['w', 'Width'], ['h', 'Height']]);
+      F.push(sect('Type'));
+      F.push(field({ key: 'font', label: 'Font', type: 'select', rebuild: true, options: Object.entries(G.FONTS).map(([k, f]) => [k, f.label]) }, el));
+      F.push(field({ key: 'style', label: 'Style', type: 'select', options: (G.FONTS[el.font] || G.FONTS.raj).styles.map((s) => [s, s]) }, el));
+      F.push(field({ key: 'size', label: 'Size', type: 'number', min: 4 }, el));
+      F.push(field({ key: 'align', label: 'Align', type: 'select', options: [['left', 'Left'], ['center', 'Centre'], ['right', 'Right']] }, el));
+    }
+
+    if (el.type === 'image') {
+      F.push(sect('Picture'));
+      const icon = G.ctIconFor(el.atlas);
+      F.push('<label class="field wide"><span>Car Tuning icon</span><select data-icon data-rebuild>'
+        + [['', 'None (my own atlas)']].concat(G.CT_ICONS.map((i) => [i.key, i.label]))
+          .map(([k, l]) => '<option value="' + k + '"' + ((icon ? icon.key : '') === k ? ' selected' : '') + '>' + esc(l) + '</option>').join('')
+        + '</select><span class="help">Fills in the atlas, the part and the HUD\'s colour for one of Car Tuning\'s own icons.</span></label>');
+      F.push(field({ key: 'atlas', label: 'Atlas path (.inkatlas)', type: 'text', wide: true, placeholder: 'mymod\\ui\\icons.inkatlas',
+        help: 'The game loads the icon from here. Leave empty to export a plain box.' }, el));
+      F.push(field({ key: 'part', label: 'Part name', type: 'text', wide: true, placeholder: 'traction' }, el));
+      F.push('<div class="field wide"><span>Preview picture</span><div class="insp-actions" style="margin:0">'
+        + '<label class="btn small" for="previewFile">Choose picture…</label>'
+        + (el.preview ? '<button class="btn small" data-act="clearPreview">Remove</button>' : '')
+        + '<input type="file" id="previewFile" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden></div>'
+        + '<span class="help">Only shown here, to judge the layout. It is not exported.</span></div>');
+    }
+
+    F.push(sect('Colour'));
+    if (el.type === 'arc' || el.type === 'bar') {
+      F.push(field({ key: 'colorOn', label: 'Lit', type: 'color' }, el));
+      F.push(field({ key: 'colorOff', label: 'Unlit', type: 'color' }, el));
+      F.push(field({ key: 'redFrom', label: 'Red zone starts at', type: 'percent', wide: true, offAt: 100, rebuild: true,
+        help: 'Segments from here on use the red colours. 100% turns the red zone off.' }, el));
+      if (n(el.redFrom, 1) < 1) {
+        F.push(field({ key: 'colorRedOn', label: 'Red lit', type: 'color' }, el));
+        F.push(field({ key: 'colorRedOff', label: 'Red unlit', type: 'color' }, el));
+      }
+    } else if (el.type === 'numbers') {
+      F.push(field({ key: 'color', label: 'Colour', type: 'color' }, el));
+      F.push(field({ key: 'redFrom', label: 'Red from', type: 'percent', wide: true, offAt: 100, rebuild: true,
+        help: 'Numbers from this share of full scale on are red, as a tach\'s redline. 100% turns it off.' }, el));
+      if (n(el.redFrom, 1) < 1) F.push(field({ key: 'colorRed', label: 'Red', type: 'color' }, el));
+    } else {
+      F.push(field({ key: 'color', label: el.type === 'image' ? 'Tint' : 'Colour', type: 'color' }, el));
+    }
+    F.push(field({ key: 'opacity', label: 'Opacity', type: 'percent' }, el));
+
+    {
+      F.push(sect('Acts as a light'));
+      const l = el.light || {};
+      const when = l.when || '';
+      F.push('<label class="field wide"><span>Lights up when</span><select data-light="when" data-rebuild>'
+        + [['', 'Never (always shown)'], ['ct', 'A Car Tuning light is on'], ['flag', 'A flag your mod sets is on'],
+          ['rpmAbove', 'RPM is above…'], ['speedAbove', 'Speed is above…'], ['fuelBelow', 'Fuel is below…']]
+          .map(([k, t]) => '<option value="' + k + '"' + (when === k ? ' selected' : '') + '>' + t + '</option>').join('') + '</select></label>');
+      if (when) {
+        if (when === 'ct') {
+          const lamp = G.ctLamp(l.lamp) || G.CT_LAMPS[0];
+          F.push('<label class="field wide"><span>Car Tuning light</span><select data-light="lamp" data-rebuild>'
+            + G.CT_LAMPS.map((x) => '<option value="' + x.key + '"' + (lamp.key === x.key ? ' selected' : '') + '>' + esc(x.label) + '</option>').join('')
+            + '</select><span class="help">' + esc(lamp.help)
+            + (state.design.hook !== 'carTuning' ? ' Feed the dashboard from Car Tuning (dashboard settings) for it to light.' : '')
+            + '</span></label>');
+        } else if (when === 'flag') {
+          F.push('<label class="field wide"><span>Flag name</span><input type="text" data-light="flag" value="' + esc(l.flag || '')
+            + '" placeholder="traction" spellcheck="false"><span class="help">Your mod calls SetFlag(n"' + esc(l.flag || 'traction')
+            + '", true).</span></label>');
+        } else if (when === 'speedAbove') {
+          F.push('<label class="field"><span>Speed (' + (state.design.units === 'mph' ? 'mph' : 'km/h') + ')</span><input type="number" data-light="threshold" value="'
+            + esc(n(l.threshold, 100)) + '" step="1"></label>');
+        } else {
+          F.push('<div class="field wide"><span>' + (when === 'rpmAbove' ? 'Share of full-scale RPM' : 'Fuel left') + '</span><div class="rangerow">'
+            + '<input type="range" data-light="threshold" data-percent min="1" max="100" step="1" value="' + Math.round(n(l.threshold, 0.5) * 100)
+            + '" aria-label="Threshold"><output>' + Math.round(n(l.threshold, 0.5) * 100) + '%</output></div></div>');
+        }
+        F.push('<label class="field"><span>Then</span><select data-light="effect" data-rebuild>'
+          + [['show', when === 'ct' ? 'Show it, as the HUD does' : 'Show it'], ['hide', 'Hide it'], ['color', 'Change colour'],
+            ['blink', 'Blink it'], ['blinkSteady', 'Blink while on, steady while off'], ['flash', 'Fade in and out']]
+            .map(([k, t]) => '<option value="' + k + '"' + ((l.effect || 'show') === k ? ' selected' : '') + '>' + t + '</option>').join('') + '</select></label>');
+        if (l.effect === 'color') {
+          F.push('<div class="field"><span>' + (el.type === 'arc' || el.type === 'bar' ? 'Lit segments turn'
+            : el.type === 'numbers' ? 'Numbers turn' : 'Lit colour')
+            + '</span><div class="colorrow"><input type="color" data-light="onColor" value="'
+            + esc(l.onColor || '#ff2a2a') + '" aria-label="Lit colour"></div></div>');
+        } else if (l.effect === 'flash') {
+          F.push('<label class="field"><span>Fade period (s)</span><input type="number" data-light="period" value="' + esc(n(l.period, 0.6))
+            + '" step="0.05" min="0.1"></label>');
+        } else if (l.effect === 'blink' || l.effect === 'blinkSteady') {
+          F.push('<label class="field"><span>Blinks a second</span><input type="number" data-light="rate" value="' + esc(n(l.rate, 4))
+            + '" step="0.5" min="0.5"><span class="help">4 is the rate of Car Tuning\'s HUD lights.</span></label>');
+        }
+        if (['rect', 'line', 'text', 'image'].includes(el.type) && ['show', 'blink', 'flash'].includes(l.effect || 'show')) {
+          const asDesign = state.design.offLights === 'hidden' ? 'hidden' : 'unlit';
+          F.push('<label class="field"><span>When off</span><select data-light="offLook" data-rebuild>'
+            + [['', 'As the design (' + asDesign + ')'], ['unlit', 'Unlit colour'], ['hidden', 'Hidden']]
+              .map(([k, t]) => '<option value="' + k + '"' + ((l.offLook || '') === k ? ' selected' : '') + '>' + t + '</option>').join('')
+            + '</select></label>');
+        }
+        if (when === 'ct' && (l.effect || 'show') === 'show' && (G.ctLamp(l.lamp) || G.CT_LAMPS[0]).flashes) {
+          F.push('<p class="help" style="grid-column:1/-1;margin:0">Steady while lit and flashing four times a second while it flashes, exactly as Car Tuning\'s HUD light.</p>');
+        }
+      }
+    }
+    return F.join('');
+  }
+
+  // How much of the screen the dashboard takes in game: the HUD is laid out on 3840 x 2160 at any resolution.
+  function scaleHint(d) {
+    const across = Math.round(n(d.width, 640) * (n(d.scale, 1) || 1) / 3840 * 100);
+    return 'In game the dashboard is ' + across + '% of the screen\'s width: the HUD is laid out on 3840 × 2160 at any '
+      + 'resolution. New designs start at 1.6. It grows from the corner it is anchored to, and players can resize it '
+      + 'with Car Tuning\'s "Dashboard size" setting.';
+  }
+
+  function designFields(d) {
+    const F = [];
+    F.push(field({ key: 'className', label: 'Class name', type: 'text', wide: true, placeholder: 'CarTuningDash',
+      help: 'The script\'s class, and the file name.' }, d));
+    F.push(field({ key: 'module', label: 'Module', type: 'text', wide: true, placeholder: 'CarTuning',
+      help: 'Optional. Use your mod\'s module so the classes sit with the rest of it.' }, d));
+    F.push(sect('Canvas'));
+    F.push(field({ key: 'width', label: 'Width', type: 'number', min: 50 }, d));
+    F.push(field({ key: 'height', label: 'Height', type: 'number', min: 50 }, d));
+    F.push(sect('Placement in game'));
+    F.push(field({ key: 'anchor', label: 'Anchored to', type: 'select', wide: true,
+      options: Object.keys(G.ANCHORS).map((k) => [k, k.replace(/([a-z])([A-Z])/g, '$1 $2')]) }, d));
+    F.push(field({ key: 'offsetX', label: 'Shift X', type: 'number' }, d));
+    F.push(field({ key: 'offsetY', label: 'Shift Y', type: 'number' }, d));
+    F.push(field({ key: 'scale', label: 'Scale', type: 'number', step: 0.05, min: 0.1 }, d));
+    F.push('<p class="help" id="scaleHint" style="grid-column:1/-1;margin:0">' + scaleHint(d) + '</p>');
+    F.push(sect('Hook-up'));
+    F.push(field({ key: 'hook', label: 'Feed it from', type: 'select', wide: true, rebuild: true,
+      options: [['carTuning', 'Car Tuning (its own window on the HUD)'], ['stock', 'The stock car HUD (automatic)'], ['none', 'My own code only']],
+      help: d.hook === 'none' ? 'Call Attach(parent), SetSpeed, SetRpm and SetGear yourself.'
+        : d.hook === 'carTuning' ? 'Shows in a window of its own while V drives, fed by the car and by Car Tuning\'s lights and fuel. Needs Car Tuning and Codeware.'
+          : 'Shows inside the stock car HUD (third-person view only, and clipped to its window) and receives its speed, RPM and gear.' }, d));
+    if (d.hook !== 'none') F.push(field({ key: 'hideStock', label: 'Hide the stock gauges', type: 'check', wide: true }, d));
+    if (d.hook === 'carTuning') F.push(field({ key: 'darkWithoutPower', label: 'Dark with the power off', type: 'check', wide: true,
+      rebuild: true }, d));
+    if (d.hook === 'carTuning' && d.darkWithoutPower !== false) {
+      F.push(field({ key: 'powerOff', label: 'With the power off', type: 'select', wide: true, rebuild: true,
+        options: [['unlit', 'Unlit: dimmed, every light off'], ['hidden', 'Hidden']],
+        help: d.powerOff === 'hidden' ? 'The dashboard disappears until the car\'s power comes on.'
+          : 'The dashboard stays on screen, dimmed and with its lights off, until the car\'s power comes on, as a real one with the key off.' }, d));
+      if (d.powerOff !== 'hidden') F.push(field({ key: 'unlitOpacity', label: 'Unlit brightness', type: 'percent', wide: true, min: 5, max: 80 }, d));
+    }
+    F.push(sect('Lights'));
+    F.push(field({ key: 'offLights', label: 'Lights that are off', type: 'select', wide: true, rebuild: true,
+      options: [['unlit', 'Shown unlit, in a dark colour'], ['hidden', 'Hidden']],
+      help: d.offLights === 'hidden' ? 'A light disappears while it is off.'
+        : 'A light that shows, blinks or fades a panel, line, text or icon stays in place while it is off, in the unlit colour, as a real dashboard\'s warning lights. Each light can be set to hide instead.' }, d));
+    if (d.offLights !== 'hidden') F.push(field({ key: 'offColor', label: 'Unlit colour', type: 'color' }, d));
+    F.push(sect('Readings'));
+    F.push(field({ key: 'units', label: 'Speed units', type: 'select', rebuild: true, options: [['kmh', 'km/h'], ['mph', 'mph']] }, d));
+    F.push(field({ key: 'speedMax', label: 'Full-scale speed', type: 'number', min: 1 }, d));
+    F.push(field({ key: 'rpmMax', label: 'Full-scale RPM', type: 'number', min: 500, step: 100 }, d));
+    F.push(field({ key: 'gearMap', label: 'Gear numbers', type: 'select',
+      options: [['stock', 'Stock HUD (0 = R)'], ['plain', 'Plain (-1 = R)']] }, d));
+    F.push(field({ key: 'rpmFromCar', label: 'Read full-scale RPM from each car', type: 'check', wide: true }, d));
+    return F.join('');
+  }
+
+  function renderInspector() {
+    const el = selEl();
+    const box = $('#inspector');
+    if (el) {
+      box.innerHTML = '<div class="panel"><div class="insp-title"><h2>' + esc(TYPE_NAMES[el.type]) + '</h2>'
+        + '<span class="badge">' + esc(roleLabel(el) || 'drawing') + '</span></div><div class="fields" data-target="el">' + elementFields(el)
+        + '</div><div class="insp-actions"><button class="btn small" data-act="dup">Duplicate</button>'
+        + '<button class="btn small" data-act="front">Bring forward</button><button class="btn small" data-act="back">Send back</button>'
+        + '<button class="btn small danger" data-act="del">Delete</button></div></div>';
+    } else {
+      box.innerHTML = '<div class="panel"><div class="insp-title"><h2>Design settings</h2></div><div class="fields" data-target="design">'
+        + designFields(state.design) + '</div></div>'
+        + '<div class="panel kbd-help"><h2>Keys</h2><kbd>V</kbd> select · <kbd>R</kbd> panel · <kbd>L</kbd> line · <kbd>A</kbd> arc · '
+        + '<kbd>B</kbd> bar · <kbd>N</kbd> needle · <kbd>D</kbd> numbers · <kbd>T</kbd> text · <kbd>I</kbd> icon<br><kbd>Arrows</kbd> nudge (<kbd>Shift</kbd> ×10) · '
+        + '<kbd>Del</kbd> delete · <kbd>Ctrl D</kbd> duplicate · <kbd>Ctrl Z</kbd> undo · <kbd>Esc</kbd> deselect<br>Hold <kbd>Alt</kbd> while dragging to ignore the grid.</div>';
+    }
+  }
+
+  function roleLabel(el) {
+    const key = el.type === 'text' ? 'content' : 'source';
+    const opts = SOURCE_OPTIONS[el.type];
+    let label = '';
+    if (opts && el[key] && el[key] !== 'static') label = (opts.find((o) => o[0] === el[key]) || [, ''])[1].split(':')[0];
+    if (el.light && el.light.when) label = label ? label + ' + light' : 'light';
+    return label;
+  }
+
+  function readInput(inp) {
+    if (inp.type === 'checkbox') return inp.checked;
+    if (inp.hasAttribute('data-percent')) return clamp(n(inp.value) / 100, 0, 1);
+    if (inp.type === 'number') return n(inp.value);
+    return inp.value;
+  }
+
+  function onInspectorInput(evt) {
+    const inp = evt.target;
+    const fieldsBox = inp.closest('.fields');
+    if (!fieldsBox) return;
+    const target = fieldsBox.dataset.target === 'el' ? selEl() : state.design;
+    if (!target) return;
+    if (inp.hasAttribute('data-icon')) {
+      const icon = G.CT_ICONS.find((i) => i.key === inp.value);
+      if (icon) { target.atlas = icon.atlas; target.part = icon.part; target.color = icon.color; }
+      changed({ inspector: evt.type === 'change', drive: false });
+      return;
+    }
+    if (inp.hasAttribute('data-lineup')) {
+      const src = findEl(inp.value);
+      if (src) Object.assign(target, { cx: src.cx, cy: src.cy, start: src.start, sweep: src.sweep });
+      changed({ inspector: evt.type === 'change', drive: false });
+      return;
+    }
+    if (inp.hasAttribute('data-light')) {
+      const k = inp.getAttribute('data-light');
+      target.light = Object.assign({ when: '', flag: '', lamp: '', threshold: 0.9, effect: 'show', onColor: '#ff2a2a', period: 0.6, rate: 4 },
+        target.light || {});
+      let v = readInput(inp);
+      if (k === 'when' && v === 'ct' && !G.ctLamp(target.light.lamp)) target.light.lamp = G.CT_LAMPS[0].key;
+      if (k === 'when' && v) {
+        if (v === 'rpmAbove' && !(target.light.threshold > 0 && target.light.threshold <= 1)) target.light.threshold = 0.9;
+        if (v === 'fuelBelow' && !(target.light.threshold > 0 && target.light.threshold <= 1)) target.light.threshold = 0.15;
+        if (v === 'speedAbove' && target.light.threshold <= 1) target.light.threshold = 100;
+      }
+      target.light[k] = v;
+      if (k === 'when' && !v) delete target.light;
+    } else {
+      const k = inp.dataset.key;
+      if (!k) return;
+      let v = readInput(inp);
+      if (inp.hasAttribute('data-hex')) {
+        if (!/^#[0-9a-f]{6}$/i.test(v)) return;
+        const picker = inp.parentElement.querySelector('input[type="color"]');
+        if (picker) picker.value = v;
+      } else if (inp.type === 'color') {
+        const hex = inp.parentElement.querySelector('[data-hex]');
+        if (hex) hex.value = v;
+      }
+      if (k === 'segments') v = clamp(Math.round(v), 1, 240);
+      if (k === 'font' && !(G.FONTS[v].styles.includes(target.style))) target.style = G.FONTS[v].styles[0];
+      if (target.type === 'numbers' && k === 'source') {
+        if (v === 'rpm' && n(target.step, 1) > 5) target.step = 1;
+        if (v === 'speed' && n(target.step, 20) < 5) target.step = 20;
+      }
+      target[k] = v;
+    }
+    const out = inp.parentElement && inp.parentElement.querySelector('output');
+    if (out && inp.type === 'range') {
+      const offAt = inp.dataset.key === 'redFrom' ? 100 : undefined;
+      out.textContent = offAt !== undefined && Number(inp.value) >= offAt ? 'off' : inp.value + '%';
+    }
+    const rebuild = inp.hasAttribute('data-rebuild') && evt.type === 'change';
+    if (fieldsBox.dataset.target === 'design') {
+      if (inp.dataset.key === 'name') renderTop();
+      if ((inp.dataset.key === 'scale' || inp.dataset.key === 'width') && $('#scaleHint')) $('#scaleHint').textContent = scaleHint(state.design);
+      changed({ inspector: rebuild, drive: true });
+    } else {
+      changed({ inspector: rebuild, drive: rebuild || inp.hasAttribute('data-light') });
+    }
+  }
+
+  const insp = $('#inspector');
+  insp.addEventListener('input', (e) => { if (e.target.type !== 'file' && e.target.tagName !== 'SELECT') onInspectorInput(e); });
+  insp.addEventListener('change', (e) => { if (e.target.type !== 'file') onInspectorInput(e); else onPreviewFile(e.target); });
+  insp.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-act]'); if (!b) return;
+    const act = b.dataset.act;
+    if (act === 'del') deleteSelected();
+    else if (act === 'dup') duplicateSelected();
+    else if (act === 'front') moveSelected(1);
+    else if (act === 'back') moveSelected(-1);
+    else if (act === 'clearPreview') { const el = selEl(); if (el) { el.preview = ''; changed({ inspector: true }); } }
+  });
+
+  function onPreviewFile(inp) {
+    const file = inp.files && inp.files[0];
+    const el = selEl();
+    if (!file || !el) return;
+    if (file.size > 400 * 1024) { toast('That picture is over 400 KB. Use a smaller one for the preview.'); return; }
+    const reader = new FileReader();
+    reader.onload = () => { el.preview = String(reader.result); changed({ inspector: true }); };
+    reader.readAsDataURL(file);
+  }
+
+  function deleteSelected() {
+    const i = state.design.elements.findIndex((e) => e.id === state.selected);
+    if (i < 0) return;
+    state.design.elements.splice(i, 1);
+    state.selected = null;
+    changed({ inspector: true, drive: true });
+  }
+  function duplicateSelected() {
+    const el = selEl(); if (!el) return;
+    const c = clone(el); c.id = newId(); c.name = uniqueName(el.name);
+    ['x', 'cx', 'x1', 'x2'].forEach((k) => { if (k in c) c[k] += 10; });
+    ['y', 'cy', 'y1', 'y2'].forEach((k) => { if (k in c) c[k] += 10; });
+    const i = state.design.elements.indexOf(el);
+    state.design.elements.splice(i + 1, 0, c);
+    state.selected = c.id;
+    changed({ inspector: true, drive: true });
+  }
+  function moveSelected(dir) {
+    const list = state.design.elements;
+    const i = list.findIndex((e) => e.id === state.selected);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= list.length) return;
+    [list[i], list[j]] = [list[j], list[i]];
+    changed({});
+  }
+
+  // ------------------------------------------------------------------ layers
+  function renderLayers() {
+    const els = state.design.elements;
+    const pane = $('#layersPane');
+    if (!els.length) {
+      pane.innerHTML = '<p class="empty">Nothing drawn yet. Pick a tool on the left, or add a ready-made part.</p>';
+      return;
+    }
+    pane.innerHTML = '<ul class="layers" aria-label="Parts, top of the list is drawn on top">' + els.slice().reverse().map((el) => {
+      const role = roleLabel(el);
+      return '<li class="layer" data-id="' + esc(el.id) + '" aria-selected="' + (el.id === state.selected) + '" tabindex="0">'
+        + '<span class="kind">' + esc(TYPE_NAMES[el.type]) + '</span><span class="nm">' + esc(el.name) + '</span>'
+        + (role ? '<span class="badge' + (role.includes('light') ? ' light' : '') + '">' + esc(role) + '</span>' : '<span></span>')
+        + '<span class="ord"><button data-move="1" aria-label="Bring forward" title="Bring forward">▲</button>'
+        + '<button data-move="-1" aria-label="Send back" title="Send back">▼</button></span></li>';
+    }).join('') + '</ul>';
+  }
+  $('#layersPane').addEventListener('click', (e) => {
+    const li = e.target.closest('[data-id]'); if (!li) return;
+    state.selected = li.dataset.id;
+    const mv = e.target.closest('[data-move]');
+    if (mv) { moveSelected(Number(mv.dataset.move)); renderInspector(); return; }
+    renderStage(); renderInspector(); renderLayers();
+  });
+  $('#layersPane').addEventListener('keydown', (e) => {
+    const li = e.target.closest('[data-id]');
+    if (li && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); state.selected = li.dataset.id; renderStage(); renderInspector(); renderLayers(); }
+  });
+
+  // ------------------------------------------------------------- test drive
+  function renderDrive() {
+    const d = state.design, s = state.sim;
+    const metric = s.metric === null ? d.units !== 'mph' : s.metric;
+    const unit = metric ? 'km/h' : 'mph';
+    const maxSpeed = Math.max(1, Math.round(n(d.speedMax, 260) * 1.1));
+    s.speed = clamp(s.speed, 0, maxSpeed);
+    s.rpm = clamp(s.rpm, 0, n(d.rpmMax, 8000));
+    const gears = [[0, 'R'], [-1, 'N'], [1, '1'], [2, '2'], [3, '3'], [4, '4'], [5, '5'], [6, '6']];
+    const gearButtons = gears.map(([v, l]) => {
+      const label = d.gearMap === 'plain' ? (v === 0 ? 'N' : v === -1 ? 'R' : l) : l;
+      return [v, label];
+    }).sort((a, b) => (a[1] === 'R' ? -2 : a[1] === 'N' ? -1 : Number(a[1]))
+      - (b[1] === 'R' ? -2 : b[1] === 'N' ? -1 : Number(b[1])));
+    let html = ''
+      + '<label class="ctl"><span>Speed <output id="o-speed">' + Math.round(s.speed) + ' ' + unit + '</output></span>'
+      + '<input type="range" id="sim-speed" min="0" max="' + maxSpeed + '" step="1" value="' + Math.round(s.speed) + '"></label>'
+      + '<label class="ctl"><span>RPM <output id="o-rpm">' + Math.round(s.rpm) + '</output></span>'
+      + '<input type="range" id="sim-rpm" min="0" max="' + n(d.rpmMax, 8000) + '" step="50" value="' + Math.round(s.rpm) + '"></label>'
+      + '<label class="ctl"><span>Fuel <output id="o-fuel">' + Math.round(s.fuel * 100) + '%</output></span>'
+      + '<input type="range" id="sim-fuel" min="0" max="100" step="1" value="' + Math.round(s.fuel * 100) + '"></label>'
+      + '<div class="ctl"><span>Gear</span><div class="gears" role="group" aria-label="Gear">' + gearButtons.map(([v, l]) =>
+        '<button data-gear="' + v + '" aria-pressed="' + (s.gear === v) + '">' + l + '</button>').join('') + '</div></div>'
+      + '<div class="ctl"><span>Units</span><div class="chips"><button class="chip" data-metric="1" aria-pressed="' + metric + '">km/h</button>'
+      + '<button class="chip" data-metric="0" aria-pressed="' + !metric + '">mph</button></div></div>';
+    const flags = flagNames();
+    if (flags.length) {
+      html += '<div class="ctl"><span>Flags</span><div class="chips">' + flags.map((f) => '<button class="chip" data-flag="' + esc(f)
+        + '" aria-pressed="' + !!s.flags[f] + '">' + esc(f) + '</button>').join('') + '</div></div>';
+    }
+    const lamps = lampNames();
+    if (lamps.length) {
+      const words = ['off', 'lit', 'flashing'];
+      html += '<div class="ctl"><span>Car Tuning lights</span><div class="chips">' + lamps.map((k) => {
+        const lamp = G.ctLamp(k), st = G.lampOf(simState(), k);
+        return '<button class="chip" data-lamp="' + esc(k) + '" aria-pressed="' + (st > 0) + '" title="Click: off, lit'
+          + (lamp.flashes ? ', flashing' : '') + '">' + esc(lamp.label) + ': ' + words[st] + '</button>';
+      }).join('') + '</div></div>';
+    }
+    valueNames().forEach((v) => {
+      const val = n(s.values[v], 0.5); s.values[v] = val;
+      html += '<label class="ctl"><span>' + esc(v) + ' <output>' + Math.round(val * 100) + '%</output></span>'
+        + '<input type="range" data-value="' + esc(v) + '" min="0" max="100" step="1" value="' + Math.round(val * 100) + '"></label>';
+    });
+    $('#drive').innerHTML = html;
+  }
+
+  $('#drive').addEventListener('input', (e) => {
+    const t = e.target, s = state.sim;
+    stopPull();
+    if (t.id === 'sim-speed') { s.speed = n(t.value); updateDriveOutputs(); }
+    else if (t.id === 'sim-rpm') { s.rpm = n(t.value); updateDriveOutputs(); }
+    else if (t.id === 'sim-fuel') { s.fuel = n(t.value) / 100; updateDriveOutputs(); }
+    else if (t.dataset.value) { s.values[t.dataset.value] = n(t.value) / 100; t.parentElement.querySelector('output').textContent = t.value + '%'; }
+    renderStage();
+  });
+  $('#drive').addEventListener('click', (e) => {
+    const s = state.sim;
+    const g = e.target.closest('[data-gear]');
+    const f = e.target.closest('[data-flag]');
+    const m = e.target.closest('[data-metric]');
+    const lp = e.target.closest('[data-lamp]');
+    if (g) s.gear = Number(g.dataset.gear);
+    else if (f) s.flags[f.dataset.flag] = !s.flags[f.dataset.flag];
+    else if (lp) {
+      const k = lp.dataset.lamp, lamp = G.ctLamp(k);
+      s.lamps[k] = (G.lampOf(simState(), k) + 1) % (lamp && lamp.flashes ? 3 : 2);
+    }
+    else if (m) {
+      const metric = m.dataset.metric === '1';
+      const was = s.metric === null ? state.design.units !== 'mph' : s.metric;
+      if (was !== metric) s.speed = metric ? s.speed * 1.609344 : s.speed / 1.609344;
+      s.metric = metric;
+    } else return;
+    renderDrive(); renderStage();
+  });
+  function updateDriveOutputs() {
+    const d = state.design, s = state.sim;
+    const metric = s.metric === null ? d.units !== 'mph' : s.metric;
+    const os = $('#o-speed'), or = $('#o-rpm'), of = $('#o-fuel');
+    if (os) os.textContent = Math.round(s.speed) + ' ' + (metric ? 'km/h' : 'mph');
+    if (or) or.textContent = Math.round(s.rpm);
+    if (of) of.textContent = Math.round(s.fuel * 100) + '%';
+    const is = $('#sim-speed'), ir = $('#sim-rpm');
+    if (is && document.activeElement !== is) is.value = Math.round(s.speed);
+    if (ir && document.activeElement !== ir) ir.value = Math.round(s.rpm);
+  }
+
+  // A short acceleration run through the gears.
+  let pull = null;
+  function stopPull() { if (pull) { cancelAnimationFrame(pull.raf); pull = null; $('#pullBtn').textContent = 'Run a pull'; } }
+  $('#pullBtn').addEventListener('click', () => {
+    if (pull) { stopPull(); return; }
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      state.sim.rpm = n(state.design.rpmMax, 8000) * 0.95; state.sim.speed = n(state.design.speedMax) * 0.7;
+      renderDrive(); renderStage(); return;
+    }
+    const d = state.design, s = state.sim;
+    const maxRpm = n(d.rpmMax, 8000), top = n(d.speedMax, 260) * 0.9;
+    s.gear = 1; s.speed = 0; s.rpm = maxRpm * 0.15;
+    let last = performance.now();
+    pull = { raf: 0 };
+    $('#pullBtn').textContent = 'Stop';
+    const step = (now) => {
+      const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      s.speed = Math.min(top, s.speed + dt * top / (4 + s.gear * 1.4));
+      s.rpm = Math.min(maxRpm * 0.98, s.rpm + dt * maxRpm * (0.9 - s.gear * 0.09));
+      if (s.rpm >= maxRpm * 0.95 && s.gear < 6) { s.gear += 1; s.rpm = maxRpm * 0.55; }
+      updateDriveOutputs();
+      $('#drive').querySelectorAll('[data-gear]').forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.gear) === s.gear)));
+      renderStage();
+      if (s.speed >= top) { stopPull(); return; }
+      pull.raf = requestAnimationFrame(step);
+    };
+    pull.raf = requestAnimationFrame(step);
+  });
+
+  // ------------------------------------------------------------------- code
+  let codeTimer = 0;
+  function renderCodeSoon() { clearTimeout(codeTimer); codeTimer = setTimeout(renderCode, 250); }
+
+  function highlight(code) {
+    const re = /(\/\/[^\n]*)|("(?:[^"\\\n]|\\.)*")|(@\w+)|\b(public|private|protected|func|let|class|extends|return|if|else|while|new|ref|wref|this|true|false|null|module|cb|static)\b|\b(\d+(?:\.\d+)?)\b/g;
+    let out = '', last = 0, m;
+    while ((m = re.exec(code))) {
+      out += esc(code.slice(last, m.index));
+      const cls = m[1] ? 'c' : m[2] ? 's' : m[3] ? 'a' : m[4] ? 'k' : 'n';
+      out += '<span class="' + cls + '">' + esc(m[0]) + '</span>';
+      last = re.lastIndex;
+    }
+    return out + esc(code.slice(last));
+  }
+
+  function currentCode() { return G.generate(state.design); }
+  function zipPath() { return 'r6/scripts/' + G.installFolderFor(state.design) + '/' + G.fileNameFor(state.design); }
+
+  function renderCode() {
+    const code = currentCode();
+    const problems = G.check(state.design);
+    $('#codePane').innerHTML = '<div class="code-actions"><button class="btn primary small" id="copyCode">Copy</button>'
+      + '<button class="btn small" id="zipCode">Download .zip</button>'
+      + '<span class="where">' + esc(zipPath()) + ' · ' + code.split('\n').length + ' lines</span></div>'
+      + (problems.length ? '<div class="checks"><strong>Before you export</strong><ul>' + problems.map((p) => '<li>' + esc(p) + '</li>').join('') + '</ul></div>' : '')
+      + '<pre class="code" id="codeView" tabindex="0">' + highlight(code) + '</pre>';
+  }
+
+  $('#codePane').addEventListener('click', (e) => {
+    if (e.target.id === 'copyCode') copyCode();
+    if (e.target.id === 'zipCode') downloadZip();
+  });
+
+  function copyCode() {
+    const code = currentCode();
+    const fallback = () => {
+      const pre = $('#codeView');
+      if (pre) { const r = document.createRange(); r.selectNodeContents(pre); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+      toast('Copying isn\'t allowed here. The code is selected: press Ctrl+C.');
+    };
+    try {
+      navigator.clipboard.writeText(code).then(() => toast('Copied ' + G.fileNameFor(state.design) + '.'), fallback);
+    } catch (e) { fallback(); }
+  }
+
+  async function downloadZip() {
+    if (!window.JSZip) { toast('The zip maker didn\'t load (it comes from the internet). Use Copy instead.'); return; }
+    try {
+      const zip = new window.JSZip();
+      zip.file(zipPath(), currentCode());
+      const blob = await zip.generateAsync({ type: 'blob' });
+      await saveFile(G.folderFor(state.design) + '.zip', blob);
+      toast('Saved ' + G.folderFor(state.design) + '.zip. It unpacks into the game folder layout'
+        + (state.design.hook === 'carTuning' ? ', into Car Tuning\'s Dashboards folder.' : '.'));
+    } catch (e) {
+      if (e && e.code === 'declined') return;
+      if (e && e.code === 'rate_limited') { toast('A save is already waiting for an answer.'); return; }
+      toast('The download didn\'t go through. Use Copy instead.');
+    }
+  }
+
+  // ------------------------------------------------------------------- tabs
+  function setTab(t) {
+    state.tab = t;
+    $('#tabLayers').setAttribute('aria-selected', String(t === 'layers'));
+    $('#tabCode').setAttribute('aria-selected', String(t === 'code'));
+    $('#layersPane').hidden = t !== 'layers';
+    $('#codePane').hidden = t !== 'code';
+    if (t === 'code') renderCode();
+  }
+  $('#tabLayers').addEventListener('click', () => setTab('layers'));
+  $('#tabCode').addEventListener('click', () => setTab('code'));
+  $('#exportBtn').addEventListener('click', () => {
+    setTab('code');
+    $('#codePane').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  // -------------------------------------------------------------- top bar
+  function renderTop() {
+    const nm = $('#designName');
+    if (document.activeElement !== nm) nm.value = state.design.name || '';
+    $('#undoBtn').disabled = !history.past.length && designJson() === history.last;
+    $('#redoBtn').disabled = !history.future.length;
+    const st = $('#status');
+    const json = designJson();
+    if (state.isExample) { st.textContent = 'Example'; st.dataset.kind = ''; }
+    else if (state.docId && json === state.savedJson) { st.textContent = state.db ? 'Saved to My designs' : 'Saved in this browser'; st.dataset.kind = 'saved'; }
+    else if (state.docId) { st.textContent = 'Unsaved changes'; st.dataset.kind = 'dirty'; }
+    else { st.textContent = 'Not saved yet'; st.dataset.kind = 'dirty'; }
+    $('#saveBtn').disabled = false;
+    $('#saveBtn').title = state.db ? 'Save to My designs' : 'Save to My designs, in this browser';
+  }
+  $('#designName').addEventListener('input', (e) => { state.design.name = e.target.value; changed({ layers: false }); });
+  $('#undoBtn').addEventListener('click', undo);
+  $('#redoBtn').addEventListener('click', redo);
+  $('#newBtn').addEventListener('click', () => { commitHistory(); const prev = history.last; loadDesign(blankDesign());
+    history.past.push(prev); renderTop(); toast('Started a new design. Undo brings the last one back.'); });
+  $('#exampleBtn').addEventListener('click', () => { commitHistory(); const prev = history.last; loadDesign(exampleDesign(), { example: true });
+    history.past.push(prev); renderTop(); });
+
+  // ------------------------------------------------------------ my designs
+  const sheet = $('#designsSheet');
+  $('#designsBtn').addEventListener('click', () => { renderSaved(); sheet.hidden = false; $('#closeDesigns').focus(); });
+  $('#closeDesigns').addEventListener('click', () => { sheet.hidden = true; });
+  sheet.addEventListener('click', (e) => { if (e.target === sheet) sheet.hidden = true; });
+
+  function renderSaved() {
+    $('#designsNote').textContent = state.db
+      ? 'Designs saved to your account. Only you can see them.'
+      : 'Designs saved in this browser. Export a design file to keep a copy elsewhere or to share it.';
+    const list = $('#savedList');
+    if (!state.saved.length) { list.innerHTML = '<li><span class="meta">No saved designs yet. Save puts the current one here.</span></li>'; return; }
+    list.innerHTML = state.saved.map((s) => '<li data-doc="' + esc(s.id) + '"><div style="min-width:0"><div class="nm">' + esc(s.name)
+      + (s.id === state.docId ? ' <span class="badge">open</span>' : '') + '</div><div class="meta">' + esc(s.when) + ' · '
+      + s.count + ' parts</div></div><div class="acts"><button class="btn small" data-open>Open</button>'
+      + '<button class="btn small danger" data-del>Delete</button></div></li>').join('');
+  }
+
+  $('#savedList').addEventListener('click', async (e) => {
+    const li = e.target.closest('[data-doc]'); if (!li) return;
+    const id = li.dataset.doc;
+    if (e.target.closest('[data-open]')) {
+      const s = state.saved.find((x) => x.id === id); if (!s) return;
+      commitHistory(); const prev = history.last;
+      loadDesign(s.design, { docId: id, savedJson: null });
+      state.savedJson = designJson(); saveDraft();
+      history.past.push(prev); renderTop();
+      sheet.hidden = true; toast('Opened ' + s.name + '.');
+    } else if (e.target.closest('[data-del]')) {
+      const acts = li.querySelector('.acts');
+      acts.innerHTML = '<span class="meta">Delete for good?</span><button class="btn small danger" data-really>Delete</button><button class="btn small" data-cancel>Keep</button>';
+    } else if (e.target.closest('[data-cancel]')) {
+      renderSaved();
+    } else if (e.target.closest('[data-really]')) {
+      if (!state.db) {
+        localWrite(localList().filter((x) => x.id !== id));
+        localRefresh();
+        if (state.docId === id) { state.docId = null; state.savedJson = null; saveDraft(); renderTop(); }
+        renderSaved(); toast('Deleted.');
+        return;
+      }
+      try {
+        await state.db.collection('data/users/' + state.uid).doc(id).delete();
+        if (state.docId === id) { state.docId = null; state.savedJson = null; saveDraft(); renderTop(); }
+        toast('Deleted.');
+      } catch (err) { toast('Couldn\'t delete it. Try again in a moment.'); }
+    }
+  });
+
+  function designForStorage() {
+    const d = clone(state.design);
+    let json = JSON.stringify(d);
+    if (json.length > 230000) {
+      d.elements.forEach((e) => { if (e.preview) e.preview = ''; });
+      json = JSON.stringify(d);
+      if (json.length <= 230000) toast('Preview pictures were left out to fit the design in.');
+    }
+    return json.length > 230000 ? null : d;
+  }
+
+  async function saveToAccount(asCopy) {
+    if (!state.db || !state.uid) { saveLocally(asCopy); return; }
+    commitHistory();
+    const d = designForStorage();
+    if (!d) { toast('This design is too large to save. Remove some parts or pictures.'); return; }
+    const coll = state.db.collection('data/users/' + state.uid);
+    const ref = (!asCopy && state.docId) ? coll.doc(state.docId) : coll.doc();
+    if (asCopy) d.name = (d.name || 'Dashboard') + ' (copy)';
+    try {
+      await ref.set({ name: d.name || 'Dashboard', updatedAt: new Date().toISOString(), count: d.elements.length, design: d });
+      if (asCopy) { state.design.name = d.name; }
+      state.docId = ref.id;
+      state.savedJson = designJson();
+      state.isExample = false;
+      saveDraft(); renderTop(); renderSaved();
+      toast(asCopy ? 'Saved a copy.' : 'Saved to My designs.');
+    } catch (err) {
+      if (err && err.code === 'quota_exceeded') toast('Your designs storage is full. Delete some designs first.');
+      else toast('Couldn\'t save. Try again in a moment.');
+    }
+  }
+  $('#saveBtn').addEventListener('click', () => saveToAccount(false));
+  $('#saveCopyBtn').addEventListener('click', () => saveToAccount(true));
+
+  // Away from claude.ai (on GitHub, or the page opened from a folder): My designs live in this browser.
+  const LOCAL_KEY = 'redline-ink-designs-v1';
+  function localList() {
+    try { const v = JSON.parse(storageGet(LOCAL_KEY) || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; }
+  }
+  function localWrite(list) {
+    try { localStorage.setItem(LOCAL_KEY, JSON.stringify(list)); return true; } catch (e) { return false; }
+  }
+  function localRefresh() {
+    if (state.db) return;
+    state.saved = localList().filter((v) => v && v.design && Array.isArray(v.design.elements))
+      .sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt))).map((v) => {
+        let when = '';
+        try { when = new Date(v.updatedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }); } catch (e) { when = ''; }
+        return { id: String(v.id), name: String(v.name || 'Dashboard'), when: when, count: Number(v.count) || 0, design: v.design };
+      });
+  }
+  function saveLocally(asCopy) {
+    commitHistory();
+    const d = designForStorage();
+    if (!d) { toast('This design is too large to save. Remove some parts or pictures.'); return; }
+    if (asCopy) d.name = (d.name || 'Dashboard') + ' (copy)';
+    const list = localList();
+    const id = (!asCopy && state.docId && list.some((x) => x.id === state.docId)) ? state.docId
+      : 'local-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    const entry = { id: id, name: d.name || 'Dashboard', updatedAt: new Date().toISOString(), count: d.elements.length, design: d };
+    const i = list.findIndex((x) => x.id === id);
+    if (i >= 0) list[i] = entry; else list.push(entry);
+    if (!localWrite(list)) { toast('This browser\'s storage is full. Delete some designs, or export them as files.'); return; }
+    if (asCopy) state.design.name = d.name;
+    state.docId = id;
+    state.savedJson = designJson();
+    state.isExample = false;
+    localRefresh(); saveDraft(); renderTop(); renderSaved();
+    toast(asCopy ? 'Saved a copy.' : 'Saved in this browser.');
+  }
+
+  // A file to the downloads: through claude.ai's downloads where the page has them, else as any web page does.
+  async function saveFile(filename, data) {
+    if (state.downloads) { await state.downloads.save({ filename: filename, data: data }); return; }
+    const blob = data instanceof Blob ? data : new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+  }
+
+  $('#exportJsonBtn').addEventListener('click', async () => {
+    try {
+      await saveFile(G.pascal(state.design.className || state.design.name, 'Dash') + '.design.json', JSON.stringify(state.design, null, 2));
+      toast('Design file saved.');
+    } catch (e) { if (!e || e.code !== 'declined') toast('The download didn\'t go through.'); }
+  });
+  $('#importFile').addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const raw = JSON.parse(String(reader.result));
+        if (!raw || !Array.isArray(raw.elements)) throw new Error('shape');
+        commitHistory(); const prev = history.last;
+        loadDesign(raw);
+        history.past.push(prev); renderTop();
+        sheet.hidden = true; toast('Imported ' + (state.design.name || 'the design') + '.');
+      } catch (err) { toast('That file isn\'t a Redline Ink design.'); }
+      e.target.value = '';
+    };
+    reader.readAsText(file);
+  });
+
+  async function connectCapabilities() {
+    localRefresh();
+    const use = window.claude && typeof window.claude.use === 'function' ? window.claude.use.bind(window.claude) : null;
+    if (!use) return;
+    try { state.downloads = await use('downloads'); } catch (e) { state.downloads = null; }
+    if (state.tab === 'code') renderCode();
+    try {
+      const [db, user] = await Promise.all([use('db'), use('user')]);
+      const uid = user ? await user.id() : null;
+      if (db && uid) {
+        state.db = db; state.uid = uid;
+        db.collection('data/users/' + uid).orderBy('updatedAt', 'desc').limit(200).onSnapshot((snap) => {
+          state.saved = snap.docs.map((doc) => {
+            const v = doc.data() || {};
+            let when = '';
+            try { when = new Date(v.updatedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }); } catch (e) { when = ''; }
+            return { id: doc.id, name: String(v.name || 'Dashboard'), when: when, count: Number(v.count) || 0, design: v.design };
+          }).filter((s) => s.design && Array.isArray(s.design.elements));
+          if (!sheet.hidden) renderSaved();
+        }, () => { state.db = null; renderTop(); });
+      }
+    } catch (e) { state.db = null; }
+    renderTop();
+  }
+
+  // --------------------------------------------------------------- keyboard
+  document.addEventListener('keydown', (e) => {
+    const tag = (e.target.tagName || '').toLowerCase();
+    const typing = tag === 'input' || tag === 'select' || tag === 'textarea' || e.target.isContentEditable;
+    const mod = e.ctrlKey || e.metaKey;
+    if (mod && e.key.toLowerCase() === 'z' && !typing) { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
+    if (mod && e.key.toLowerCase() === 'y' && !typing) { e.preventDefault(); redo(); return; }
+    if (typing) return;
+    if (!sheet.hidden) { if (e.key === 'Escape') sheet.hidden = true; return; }
+    if (mod && e.key.toLowerCase() === 'd') { e.preventDefault(); duplicateSelected(); return; }
+    if (mod || e.altKey) return;
+    const el = selEl();
+    if ((e.key === 'Delete' || e.key === 'Backspace') && el) { e.preventDefault(); deleteSelected(); return; }
+    if (e.key === 'Escape') { state.selected = null; setTool('select'); renderInspector(); renderLayers(); return; }
+    if (el && e.key.startsWith('Arrow')) {
+      e.preventDefault();
+      const step = e.shiftKey ? 10 : 1;
+      const dx = e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0;
+      const dy = e.key === 'ArrowUp' ? -step : e.key === 'ArrowDown' ? step : 0;
+      if ('x' in el) { el.x += dx; el.y += dy; }
+      if ('cx' in el) { el.cx += dx; el.cy += dy; }
+      if ('x1' in el) { el.x1 += dx; el.y1 += dy; el.x2 += dx; el.y2 += dy; }
+      changed({ inspector: true });
+      return;
+    }
+    const t = TOOLS.find((x) => x[2].toLowerCase() === e.key.toLowerCase());
+    if (t) setTool(t[0]);
+  });
+
+  // ------------------------------------------------------------ stage bar
+  $('#showGrid').addEventListener('change', (e) => { state.showGrid = e.target.checked; renderStage(); });
+  $('#snapGrid').addEventListener('change', (e) => { state.snap = e.target.checked; });
+  $('#gridSize').addEventListener('change', (e) => { state.grid = Number(e.target.value); renderStage(); });
+  $('#ghosts').addEventListener('change', (e) => { state.ghosts = e.target.checked; renderStage(); });
+  $('#zoom').addEventListener('change', (e) => { state.zoom = e.target.value; renderStage(); });
+  window.addEventListener('resize', () => { applyZoom(); });
+
+  // ----------------------------------------------------------------- start
+  function renderAll() {
+    renderTools(); renderPresets(); renderStage(); renderInspector(); renderLayers(); renderDrive(); renderTop();
+    if (state.tab === 'code') renderCode();
+  }
+
+  function start() {
+    let restored = null;
+    const raw = storageGet(DRAFT_KEY);
+    if (raw) { try { restored = JSON.parse(raw); } catch (e) { restored = null; } }
+    if (restored && restored.design && Array.isArray(restored.design.elements)) {
+      state.design = normalizeDesign(restored.design);
+      state.docId = restored.docId || null;
+      state.savedJson = restored.savedJson || null;
+    } else {
+      state.design = normalizeDesign(exampleDesign());
+      state.isExample = true;
+    }
+    resetHistory();
+    renderAll();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => renderStage());
+    connectCapabilities();
+  }
+  start();
+})();
+</script>
