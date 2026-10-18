@@ -31,22 +31,26 @@
   const CT_GUARD = '@if(ModuleExists("CarTuning") && ModuleExists("Codeware"))';
 
   // D.O.P.E.'s dashboard feed (CarTuningDash, in the mod's Traction.reds): the lamps it reports, as its own HUD
-  // shows them: 0 off, 1 lit, 2 flashing four times a second. Keep in step with the mod.
+  // shows them: 0 off, 1 lit, 2 flashing four times a second; -1 for one the car does not have at all (optional:
+  // those lights are hidden then). Keep in step with the mod.
   const CT_LAMPS = [
-    { key: 'traction', label: 'Traction control', flashes: true,
-      help: 'Lit while traction control is switched off; flashes while it acts, as the HUD light.' },
-    { key: 'hillHold', label: 'Hill hold armed', help: 'Lit while hill hold is armed or holding.' },
-    { key: 'hillHoldOff', label: 'Hill hold off', help: 'Lit while hill hold is switched off.' },
-    { key: 'launch', label: 'Launch control', flashes: true,
-      help: 'Lit while launch control is armed or staged; flashes while the car launches.' },
+    { key: 'traction', label: 'Traction control', flashes: true, optional: true,
+      help: 'Lit while traction control is switched off; flashes while it acts. Hidden on a car without traction control.' },
+    { key: 'hillHold', label: 'Hill hold armed', optional: true,
+      help: 'Lit while hill hold is armed or holding. Hidden on a car without the real gearbox.' },
+    { key: 'hillHoldOff', label: 'Hill hold off', optional: true,
+      help: 'Lit while hill hold is switched off. Hidden on a car without the real gearbox.' },
+    { key: 'launch', label: 'Launch control', flashes: true, optional: true,
+      help: 'Lit while launch control is armed or staged; flashes while the car launches. Hidden on a car without the ECU tune that brings it.' },
     { key: 'headlights', label: 'Headlights on', help: 'Lit while the headlights are on, low or high beams.' },
     { key: 'highBeam', label: 'High beams', help: 'Lit while the high beams are on.' },
-    { key: 'fuelLow', label: 'Low fuel', flashes: true, help: 'Lit under 15% of the tank; flashes when nearly empty.' },
+    { key: 'fuelLow', label: 'Low fuel', flashes: true, optional: true,
+      help: 'Lit under 15% of the tank; flashes when nearly empty. Hidden with D.O.P.E.\'s fuel off.' },
     { key: 'battery', label: 'Battery', help: 'Lit with the power on and the engine off, as a real car\'s battery light.' },
     { key: 'power', label: 'Power on', help: 'Lit while the car has power.' },
     { key: 'engine', label: 'Engine running', help: 'Lit while the engine runs.' },
-    { key: 'knock', label: 'Knock (fuel grade too low)',
-      help: 'Lit while the engine knocks on too low a fuel grade and so has less power.' },
+    { key: 'knock', label: 'Knock (fuel grade too low)', optional: true,
+      help: 'Lit while the engine knocks on too low a fuel grade and so has less power. Hidden with the fuel grades off.' },
     { key: 'checkEngine', label: 'Check engine', flashes: true,
       help: 'Lit while the engine\'s health is under 80% and it has less power; flashes in limp mode, under 15%.' },
   ];
@@ -259,8 +263,10 @@
   }
 
   // A D.O.P.E. lamp in the preview: 0 off, 1 lit, 2 flashing.
+  // -1 for a lamp the car does not have (optional lamps only).
   function lampOf(state, key) {
-    return Math.max(0, Math.min(2, Math.round(num((state.lamps || {})[key], 0))));
+    const v = Math.max(-1, Math.min(2, Math.round(num((state.lamps || {})[key], 0))));
+    return v < 0 && !(ctLamp(key) || {}).optional ? 0 : v;
   }
 
   // True while a lit light also blinks: the blink effect, or a flashing D.O.P.E. lamp shown as the HUD shows it.
@@ -1351,8 +1357,9 @@
       const el = l.el, lt = el.light;
       let cond;
       const asHud = lt.effect === 'show' || lt.effect === 'hide' || lt.effect === 'color' || !lt.effect;
+      const lampKey = lt.when === 'ct' ? (ctLamp(lt.lamp) ? lt.lamp : 'traction') : '';
       if (lt.when === 'ct') {
-        const lamp = cname(ctLamp(lt.lamp) ? lt.lamp : 'traction');
+        const lamp = cname(lampKey);
         cond = asHud ? 'this.LampOn(' + lamp + ')' : 'this.Lamp(' + lamp + ') >= 1';
       } else if (lt.when === 'flag') cond = 'this.HasFlag(' + cname(String(lt.flag || 'flag').trim()) + ')';
       else if (lt.when === 'rpmAbove') cond = 'this.m_rpm >= this.m_rpmMax * ' + f(num(lt.threshold, 0.9));
@@ -1361,34 +1368,42 @@
       out('    on = ' + (dark ? 'this.m_powered && ' + (/ [|&?]/.test(cond) ? '(' + cond + ')' : cond) : cond) + ';  // ' + (el.name || el.type));
       const seg = el.type === 'arc' || el.type === 'bar' || el.type === 'numbers';
       const w = 'this.' + l.field + (seg ? '.m_group' : '');
+      // a D.O.P.E. lamp the car may not have at all (-1): the part hidden then, whatever its effect
+      const optional = lt.when === 'ct' && !!(ctLamp(lampKey) || {}).optional;
+      const p = optional ? '      ' : '    ';
+      if (optional) {
+        out('    if this.Lamp(' + cname(lampKey) + ') < 0 {');
+        out('      ' + w + '.SetVisible(false);  // not on this car');
+        out('    } else {');
+        out('      ' + w + '.SetVisible(true);');
+      }
       if (lightOffLook(design, el) === 'unlit') {
         // shown in the unlit colour while off, as a real dashboard's lamps
         const lit = color(el.color), dim = color(unlitColorOf(design));
         if (lt.effect === 'flash') {
-          out('    this.' + l.flashField + ' = this.Flash(' + w + ', on, ' + f(num(lt.period, 0.6)) + ', '
+          out(p + 'this.' + l.flashField + ' = this.Flash(' + w + ', on, ' + f(num(lt.period, 0.6)) + ', '
             + f(clamp01(num(el.opacity, 1))) + ', this.' + l.flashField + ');');
-          out('    ' + w + '.SetVisible(true);');
-          out('    ' + w + '.SetTintColor(on ? ' + lit + ' : ' + dim + ');');
+          out(p + w + '.SetVisible(true);');
+          out(p + w + '.SetTintColor(on ? ' + lit + ' : ' + dim + ');');
         } else if (lt.effect === 'blink') {
-          out('    ' + w + '.SetTintColor(on && this.Blink(' + f(Math.max(0.5, num(lt.rate, 4))) + ') ? ' + lit + ' : ' + dim + ');');
+          out(p + w + '.SetTintColor(on && this.Blink(' + f(Math.max(0.5, num(lt.rate, 4))) + ') ? ' + lit + ' : ' + dim + ');');
         } else {
-          out('    ' + w + '.SetTintColor(on ? ' + lit + ' : ' + dim + ');');
+          out(p + w + '.SetTintColor(on ? ' + lit + ' : ' + dim + ');');
         }
-        return;
-      }
-      if (lt.effect === 'hide') out('    ' + w + '.SetVisible(!on);');
+      } else if (lt.effect === 'hide') out(p + w + '.SetVisible(!on);');
       else if (lt.effect === 'color' && seg) {
-        out('    this.' + l.field + '.SetLight(on, ' + color(lt.onColor) + ');');
+        out(p + 'this.' + l.field + '.SetLight(on, ' + color(lt.onColor) + ');');
       } else if (lt.effect === 'color') {
-        out('    ' + w + '.SetTintColor(on ? ' + color(lt.onColor) + ' : ' + color(el.color) + ');');
+        out(p + w + '.SetTintColor(on ? ' + color(lt.onColor) + ' : ' + color(el.color) + ');');
       } else if (lt.effect === 'flash') {
-        out('    this.' + l.flashField + ' = this.Flash(' + w + ', on, ' + f(num(lt.period, 0.6)) + ', '
+        out(p + 'this.' + l.flashField + ' = this.Flash(' + w + ', on, ' + f(num(lt.period, 0.6)) + ', '
           + f(clamp01(num(el.opacity, 1))) + ', this.' + l.flashField + ');');
       } else if (lt.effect === 'blink') {
-        out('    ' + w + '.SetVisible(on && this.Blink(' + f(Math.max(0.5, num(lt.rate, 4))) + '));');
+        out(p + w + '.SetVisible(on && this.Blink(' + f(Math.max(0.5, num(lt.rate, 4))) + '));');
       } else if (lt.effect === 'blinkSteady') {
-        out('    ' + w + '.SetVisible(!on || this.Blink(' + f(Math.max(0.5, num(lt.rate, 4))) + '));');
-      } else out('    ' + w + '.SetVisible(on);');
+        out(p + w + '.SetVisible(!on || this.Blink(' + f(Math.max(0.5, num(lt.rate, 4))) + '));');
+      } else out(p + w + '.SetVisible(on);');
+      if (optional) out('    }');
     });
     out('  }');
     out('}');

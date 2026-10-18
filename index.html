@@ -641,6 +641,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
     // a light that is off, shown in the unlit colour as a real dashboard's
     const unlitOff = on !== null && G.lightOffLook(d, el) === 'unlit';
     if (unlitOff && !on) { visible = true; fill = G.unlitColorOf(d); }
+    // a D.O.P.E. lamp the car does not have at all: the part hidden
+    if (el.light && el.light.when === 'ct' && G.lampOf(live, el.light.lamp) < 0) visible = false;
     if (darkNow && !unlitNow) visible = false;
     const op = clamp(n(el.opacity, 1), 0, 1) * (unlitNow ? clamp(n(d.unlitOpacity, 0.25), 0.05, 1) : 1);
 
@@ -1589,11 +1591,12 @@ button, input, select, textarea { font: inherit; color: inherit; }
     }
     const lamps = lampNames();
     if (lamps.length) {
-      const words = ['off', 'lit', 'flashing'];
+      const words = { '-1': 'not fitted', 0: 'off', 1: 'lit', 2: 'flashing' };
       html += '<div class="ctl"><span>D.O.P.E. lights</span><div class="chips">' + lamps.map((k) => {
         const lamp = G.ctLamp(k), st = G.lampOf(simState(), k);
         return '<button class="chip" data-lamp="' + esc(k) + '" aria-pressed="' + (st > 0) + '" title="Click: off, lit'
-          + (lamp.flashes ? ', flashing' : '') + '">' + esc(lamp.label) + ': ' + words[st] + '</button>';
+          + (lamp.flashes ? ', flashing' : '') + (lamp.optional ? ', not fitted (the car does not have it)' : '') + '">' + esc(lamp.label) + ': '
+          + words[st] + '</button>';
       }).join('') + '</div></div>';
     }
     valueNames().forEach((v) => {
@@ -1622,8 +1625,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
     if (g) s.gear = Number(g.dataset.gear);
     else if (f) s.flags[f.dataset.flag] = !s.flags[f.dataset.flag];
     else if (lp) {
-      const k = lp.dataset.lamp, lamp = G.ctLamp(k);
-      s.lamps[k] = (G.lampOf(simState(), k) + 1) % (lamp && lamp.flashes ? 3 : 2);
+      const k = lp.dataset.lamp, lamp = G.ctLamp(k) || {};
+      const steps = [0, 1].concat(lamp.flashes ? [2] : [], lamp.optional ? [-1] : []);
+      s.lamps[k] = steps[(steps.indexOf(G.lampOf(simState(), k)) + 1) % steps.length];
     }
     else if (m) {
       const metric = m.dataset.metric === '1';
