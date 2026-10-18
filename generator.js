@@ -242,8 +242,28 @@
       case 'gear': return gearText(design, state.gear);
       case 'fuelPct': return Math.round(clamp01(num(state.fuel, 1)) * 100) + '%';
       case 'units': return metric ? (el.textMetric || 'km/h') : (el.textImperial || 'mph');
+      case 'odometer': return distanceText(state.odometerKm, metric, false);
+      case 'trip': return distanceText(state.tripKm, metric, true);
+      case 'distUnits': return metric ? 'km' : 'mi';
       default: return el.text || '';
     }
+  }
+
+  // A distance in km as a dashboard shows it, in km or miles as the speed: whole units grouped (48,213), or a trip
+  // to a tenth; --- before there is one (below 0).
+  const KM_PER_MILE = 1.609344;
+  function groupedInt(n) {
+    return String(Math.max(0, Math.floor(n))).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+  function distanceText(km, metric, tenths) {
+    const v = num(km, -1);
+    if (!(v >= 0)) return '---';
+    const d = metric ? v : v / KM_PER_MILE;
+    if (tenths) {
+      const t = Math.floor(d * 10);
+      return groupedInt(Math.floor(t / 10)) + '.' + (t % 10);
+    }
+    return groupedInt(d);
   }
 
   // How a light looks while it is off: 'unlit', in the design's unlit colour (dark grey) as a real dashboard's lamps, or
@@ -399,6 +419,10 @@
       if (el.type === 'numbers' && dialCount(design, el) > DIAL_MAX) {
         problems.push(label + ' would show ' + dialCount(design, el) + ' numbers; only the first ' + DIAL_MAX
           + ' are drawn. Raise "Every".');
+      }
+      if (el.type === 'text' && (el.content === 'odometer' || el.content === 'trip') && design.hook !== 'carTuning'
+        && design.hook !== 'none') {
+        problems.push(label + ' shows a distance, but only D.O.P.E. (or your own code, with SetDistance) sends one, so it shows ---.');
       }
       if (el.type === 'text' && el.locKey && !/^[A-Za-z0-9_.\-]+$/.test(el.locKey)) {
         problems.push(label + ' has a localization key with spaces or symbols.');
@@ -666,6 +690,8 @@
     out('  private let m_rpmMax: Float;');
     out('  private let m_gear: Int32;');
     out('  private let m_fuel: Float;');
+    out('  private let m_odometer: Float;');
+    out('  private let m_trip: Float;');
     out('  private let m_metric: Bool;');
     out('  private let m_flags: array<CName>;');
     out('  private let m_valueNames: array<CName>;');
@@ -694,6 +720,8 @@
     out('    this.m_ready = true;');
     out('    this.m_rpmMax = ' + f(rpmDefault) + ';');
     out('    this.m_fuel = 1.0;');
+    out('    this.m_odometer = -1.0;');
+    out('    this.m_trip = -1.0;');
     out('    this.m_gear = 1;');
     out('    this.m_metric = ' + (metricDefault ? 'true' : 'false') + ';');
     out('    this.m_powered = true;');
@@ -797,6 +825,16 @@
     out('    };');
     out('  }');
     out('');
+    out('  // The distance on the car and its trip, in km (below 0: none yet). Shown in km or miles, as the speed.');
+    out('  public func SetDistance(odometerKm: Float, tripKm: Float) -> Void {');
+    out('    this.Defaults();');
+    out('    this.m_odometer = odometerKm;');
+    out('    this.m_trip = tripKm;');
+    out('    if IsDefined(this.m_root) {');
+    out('      this.RefreshDistance();');
+    out('    };');
+    out('  }');
+    out('');
     out('  // true shows km/h, false shows mph.');
     out('  public func SetMetric(metric: Bool) -> Void {');
     out('    this.Defaults();');
@@ -804,6 +842,7 @@
     out('    if IsDefined(this.m_root) {');
     out('      this.RefreshSpeed();');
     out('      this.RefreshUnits();');
+    out('      this.RefreshDistance();');
     out('      this.RefreshLights();');
     out('    };');
     out('  }');
@@ -942,6 +981,32 @@
     out('');
     out('  private func DisplaySpeed() -> Float {');
     out('    return this.m_metric ? this.m_speed * ' + f(MPS_TO_KMH) + ' : this.m_speed * ' + f(MPS_TO_MPH) + ';');
+    out('  }');
+    out('');
+    out('  // A distance in km as the dash shows it, in km or miles as the speed: whole units grouped (48,213), or a trip');
+    out('  // to a tenth; --- before there is one.');
+    out('  private func DistanceText(km: Float, tenths: Bool) -> String {');
+    out('    if km < 0.0 {');
+    out('      return "---";');
+    out('    };');
+    out('    let distance: Float = this.m_metric ? km : km / ' + f(KM_PER_MILE) + ';');
+    out('    if tenths {');
+    out('      let t: Int32 = FloorF(distance * 10.0);');
+    out('      return this.Grouped(t / 10) + "." + IntToString(t % 10);');
+    out('    };');
+    out('    return this.Grouped(FloorF(distance));');
+    out('  }');
+    out('');
+    out('  private func Grouped(n: Int32) -> String {');
+    out('    let rest: Int32 = Max(n, 0);');
+    out('    let text: String = "";');
+    out('    while rest >= 1000 {');
+    out('      let group: Int32 = rest % 1000;');
+    out('      let pad: String = group < 10 ? "00" : (group < 100 ? "0" : "");');
+    out('      text = "," + pad + IntToString(group) + text;');
+    out('      rest = rest / 1000;');
+    out('    };');
+    out('    return IntToString(rest) + text;');
     out('  }');
     out('');
     out('  private func GetValue(name: CName) -> Float {');
@@ -1285,7 +1350,7 @@
 
     out('');
     out('  private func RefreshAll() -> Void {');
-    ['Speed', 'Rpm', 'Gear', 'Fuel', 'Units', 'Values', 'Lights'].forEach((n) => out('    this.Refresh' + n + '();'));
+    ['Speed', 'Rpm', 'Gear', 'Fuel', 'Units', 'Distance', 'Values', 'Lights'].forEach((n) => out('    this.Refresh' + n + '();'));
     out('  }');
 
     out('');
@@ -1341,6 +1406,15 @@
       const i = el.locKeyImperial ? 'this.Loc(' + cname(el.locKeyImperial) + ', ' + str(el.textImperial || 'mph') + ')' : str(el.textImperial || 'mph');
       out('    this.SetLabel(this.' + l.field + ', this.m_metric ? ' + m + ' : ' + i + ');');
     });
+    live.filter((l) => l.el.type === 'text' && l.el.content === 'distUnits')
+      .forEach((l) => out('    this.SetLabel(this.' + l.field + ', this.m_metric ? "km" : "mi");'));
+    out('  }');
+
+    out('');
+    out('  private func RefreshDistance() -> Void {');
+    live.filter((l) => l.el.type === 'text' && (l.el.content === 'odometer' || l.el.content === 'trip'))
+      .forEach((l) => out('    this.SetLabel(this.' + l.field + ', this.DistanceText('
+        + (l.el.content === 'trip' ? 'this.m_trip, true' : 'this.m_odometer, false') + '));'));
     out('  }');
 
     out('');
@@ -1457,6 +1531,9 @@
       out('  if fuel >= 0.0 {');
       out('    dash.SetFuel(fuel);');
       out('  };');
+      if (els.some((e) => e.type === 'text' && (e.content === 'odometer' || e.content === 'trip'))) {
+        out('  dash.SetDistance(CarTuningDash.Value(game, n"odometer"), CarTuningDash.Value(game, n"trip"));');
+      }
       lampsUsed.forEach((k) => out('  dash.SetLamp(' + cname(k) + ', CarTuningDash.Lamp(game, ' + cname(k) + '));'));
       if (dark) out('  dash.SetPowered(CarTuningDash.Lamp(game, n"power") >= 1);');
       out('  dash.Tick();');

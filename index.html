@@ -444,7 +444,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
     tool: 'select',
     zoom: 'fit',
     grid: 10, snap: true, showGrid: true, ghosts: true,
-    sim: { speed: 79, rpm: 4300, gear: 3, fuel: 0.58, metric: null, flags: {}, values: {}, lamps: { power: 1, engine: 1 } },
+    sim: { speed: 79, rpm: 4300, gear: 3, fuel: 0.58, metric: null, flags: {}, values: {}, lamps: { power: 1, engine: 1 },
+      odometerKm: 77612.4, tripKm: 19.8 },
     tab: 'layers',
     isExample: false,
     docId: null,           // saved design document this draft belongs to
@@ -565,7 +566,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
     const metric = s.metric === null ? d.units !== 'mph' : s.metric;
     const mps = s.speed / (metric ? G.MPS_TO_KMH : G.MPS_TO_MPH);
     return { speedMps: mps, rpm: s.rpm, rpmMax: d.rpmMax, gear: s.gear, fuel: s.fuel, metric: metric,
-      flags: s.flags, values: s.values, lamps: s.lamps };
+      flags: s.flags, values: s.values, lamps: s.lamps, odometerKm: s.odometerKm, tripKm: s.tripKm };
   }
 
   // The D.O.P.E. lamps the design uses, and the power when the dash goes dark without it.
@@ -1040,6 +1041,10 @@ button, input, select, textarea { font: inherit; color: inherit; }
       content: 'speed', font: 'digital', style: 'Regular', size: 60 })],
     ['units', 'Speed units', 'km/h', () => part('text', { name: 'Speed units', x: center().x - 50, y: center().y + 40, w: 100, h: 22,
       content: 'units', size: 18, color: COLORS.muted })],
+    ['odometer', 'Odometer', 'odo', () => part('text', { name: 'Odometer', x: center().x - 80, y: center().y + 70, w: 160, h: 28,
+      content: 'odometer', font: 'digital', style: 'Regular', size: 24, align: 'right' })],
+    ['trip', 'Trip meter', 'trip', () => part('text', { name: 'Trip', x: center().x - 80, y: center().y + 98, w: 160, h: 24,
+      content: 'trip', font: 'digital', style: 'Regular', size: 20, align: 'right', color: COLORS.muted })],
     ['gear', 'Gear', 'gear', () => part('text', { name: 'Gear', x: center().x + 140, y: center().y, w: 60, h: 56, content: 'gear',
       style: 'Bold', size: 44 })],
     ['needle', 'Speed needle', 'speed', () => part('needle', { name: 'Speed needle', cx: center().x, cy: center().y + 40, length: 100,
@@ -1078,7 +1083,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
     needle: [['static', 'Fixed pointer'], ['speed', 'Speed needle'], ['rpm', 'RPM needle'], ['fuel', 'Fuel needle'],
       ['value', 'Custom value from your mod']],
     text: [['static', 'Label'], ['speed', 'Speed number'], ['rpm', 'RPM number'], ['rpm1000', 'RPM in thousands'], ['gear', 'Gear'],
-      ['fuelPct', 'Fuel percent'], ['units', 'Speed units (km/h or mph)']],
+      ['fuelPct', 'Fuel percent'], ['units', 'Speed units (km/h or mph)'], ['odometer', 'Odometer'], ['trip', 'Trip meter'],
+      ['distUnits', 'Distance units (km or mi)']],
   };
   SOURCE_OPTIONS.numbers = [['speed', 'Speed: 0 to full-scale speed'], ['rpm', 'RPM in thousands'], ['labels', 'My own labels']];
   const NUMBERS_HELP = {
@@ -1098,6 +1104,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
     gear: 'Shows R, N or the gear number.',
     fuelPct: 'Shows the fuel your mod sends, as a percent.',
     units: 'Shows km/h or mph, matching the speed numbers.',
+    odometer: 'Shows the distance on the car, in km or miles as the speed. D.O.P.E. sends it; your own code sends it with SetDistance(km, tripKm).',
+    trip: 'Shows the trip meter to a tenth, in km or miles as the speed. Reset it in D.O.P.E.\'s vehicle controls window.',
+    distUnits: 'Shows km or mi, matching the odometer and the trip.',
   };
 
   function field(spec, el) {

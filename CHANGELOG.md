@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.2
+
+- Text readouts can show the odometer, the trip meter and the distance units (km or mi), in the same units as the
+  speed. D.O.P.E. sends the distances; with your own code, send them with `SetDistance(km, tripKm)`. New presets:
+  Odometer and Trip meter.
+- D.O.P.E.'s knock and check engine lights can be used.
+- Lights for things a car does not have (traction control, hill hold, launch control, low fuel, knock) are hidden in
+  that car, and the test drive can show them as not fitted.
+
 ## 0.1.1
 
 - Online at https://oitenk.github.io/RedlineInk/.

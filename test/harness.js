@@ -145,6 +145,12 @@ const carTuning = {
     { id: 'd2', type: 'numbers', name: 'Tach numbers', cx: 320, cy: 200, r: 140, start: 150, sweep: 240, source: 'rpm', step: 2,
       turn: 'upright', font: 'raj', style: 'Bold', size: 14, color: '#ffffff', colorRed: '#ff3d3d', redFrom: 0.8, opacity: 1,
       light: { when: 'ct', lamp: 'power', effect: 'show' } },
+    { id: 'o1', type: 'text', name: 'Odometer', x: 400, y: 280, w: 160, h: 28, content: 'odometer', font: 'digital',
+      style: 'Regular', size: 24, align: 'right', color: '#ffffff', opacity: 1 },
+    { id: 'o2', type: 'text', name: 'Trip', x: 400, y: 300, w: 160, h: 24, content: 'trip', font: 'digital',
+      style: 'Regular', size: 20, align: 'right', color: '#8fa3af', opacity: 1, light: { when: 'ct', lamp: 'headlights', effect: 'color', onColor: '#ff6b3d' } },
+    { id: 'o3', type: 'text', name: 'Distance units', x: 565, y: 280, w: 40, h: 28, content: 'distUnits', font: 'raj',
+      style: 'Medium', size: 18, align: 'left', color: '#8fa3af', opacity: 1 },
   ]),
 };
 // A design that uses D.O.P.E. lights without the D.O.P.E. feed, and a flag holding code: the checks catch both.
@@ -156,7 +162,9 @@ const misfed = { name: 'Misfed', className: 'RedlineMisfedDash', module: 'Redlin
   { id: 'm3', type: 'numbers', name: 'No labels', cx: 50, cy: 50, r: 30, start: 150, sweep: 240, source: 'labels', labels: ' , ',
     turn: 'upright', font: 'raj', style: 'Medium', size: 10, color: '#ffffff', colorRed: '#ff0000', redFrom: 1, opacity: 1 },
   { id: 'm4', type: 'numbers', name: 'Too many', cx: 50, cy: 50, r: 30, start: 150, sweep: 240, source: 'speed', step: 1,
-    turn: 'along', font: 'raj', style: 'Medium', size: 10, color: '#ffffff', colorRed: '#ff0000', redFrom: 0.9, opacity: 1 }] };
+    turn: 'along', font: 'raj', style: 'Medium', size: 10, color: '#ffffff', colorRed: '#ff0000', redFrom: 0.9, opacity: 1 },
+  { id: 'm5', type: 'text', name: 'Odometer', x: 0, y: 0, w: 60, h: 20, content: 'odometer', font: 'raj', style: 'Medium',
+    size: 10, align: 'left', color: '#ffffff', opacity: 1 }] };
 
 // One lamp hidden while off, against the design's unlit lights.
 lampEls[3].light.offLook = 'hidden';
