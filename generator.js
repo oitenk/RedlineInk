@@ -47,6 +47,8 @@
     { key: 'engine', label: 'Engine running', help: 'Lit while the engine runs.' },
     { key: 'knock', label: 'Knock (fuel grade too low)',
       help: 'Lit while the engine knocks on too low a fuel grade and so has less power.' },
+    { key: 'checkEngine', label: 'Check engine', flashes: true,
+      help: 'Lit while the engine\'s health is under 80% and it has less power; flashes in limp mode, under 15%.' },
   ];
   const ctLamp = (key) => CT_LAMPS.find((l) => l.key === key) || null;
 
