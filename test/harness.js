@@ -115,15 +115,15 @@ const plain = {
 const empty = { name: 'Empty', className: 'RedlineEmptyDash', module: 'RedlineEmpty', width: 100, height: 100,
   hook: 'stock', elements: [] };
 
-// Fed from Car Tuning: every Car Tuning lamp with every effect, Car Tuning's icons, dark without power, the stock
-// gauges hidden. It imports CarTuning and uses Codeware, so compile it with Car Tuning's scripts and Codeware.
+// Fed from D.O.P.E.: every D.O.P.E. lamp with every effect, D.O.P.E.'s icons, dark without power, the stock
+// gauges hidden. It imports CarTuning and uses Codeware, so compile it with D.O.P.E.'s scripts and Codeware.
 const lampEls = gen.CT_LAMPS.map((lamp, i) => ({ id: 'c' + i, type: 'text', name: lamp.label + ' light', x: 20 + (i % 5) * 120,
   y: 20 + Math.floor(i / 5) * 40, w: 110, h: 30, content: 'static', text: lamp.key, font: 'raj', style: 'Bold', size: 16,
   align: 'center', color: '#ff9e14', opacity: 1,
   light: { when: 'ct', lamp: lamp.key, effect: ['show', 'hide', 'color', 'blink', 'flash'][i % 5], onColor: '#ffffff',
     rate: 3, period: 0.5 } }));
 const carTuning = {
-  name: 'Car Tuning dash', className: 'RedlineCarTuningDash', module: '',
+  name: 'D.O.P.E. dash', className: 'RedlineCarTuningDash', module: '',
   width: 640, height: 320, anchor: 'BottomCenter', offsetX: 0, offsetY: -30, scale: 1,
   hook: 'carTuning', hideStock: true, darkWithoutPower: true, units: 'kmh', speedMax: 260, rpmMax: 8000,
   rpmFromCar: true, gearMap: 'stock',
@@ -147,7 +147,7 @@ const carTuning = {
       light: { when: 'ct', lamp: 'power', effect: 'show' } },
   ]),
 };
-// A design that uses Car Tuning lights without the Car Tuning feed, and a flag holding code: the checks catch both.
+// A design that uses D.O.P.E. lights without the D.O.P.E. feed, and a flag holding code: the checks catch both.
 const misfed = { name: 'Misfed', className: 'RedlineMisfedDash', module: 'RedlineMisfed', width: 100, height: 100, hook: 'stock',
   elements: [{ id: 'm1', type: 'rect', name: 'Lamp', x: 0, y: 0, w: 10, h: 10, color: '#ffffff', opacity: 1,
     light: { when: 'ct', lamp: 'battery', effect: 'show' } },
@@ -161,7 +161,7 @@ const misfed = { name: 'Misfed', className: 'RedlineMisfedDash', module: 'Redlin
 // One lamp hidden while off, against the design's unlit lights.
 lampEls[3].light.offLook = 'hidden';
 // The same, hidden without power instead of unlit.
-const carTuningHidden = Object.assign({}, carTuning, { name: 'Car Tuning hidden dash', className: 'RedlineHiddenDash', powerOff: 'hidden' });
+const carTuningHidden = Object.assign({}, carTuning, { name: 'D.O.P.E. hidden dash', className: 'RedlineHiddenDash', powerOff: 'hidden' });
 const cases = { full, plain, empty, carTuning, carTuningHidden, misfed };
 for (const [key, design] of Object.entries(cases)) {
   const dir = path.join(outRoot, key, 'r6', 'scripts', gen.installFolderFor(design));

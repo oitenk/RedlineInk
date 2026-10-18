@@ -4,7 +4,9 @@ A dashboard designer for Cyberpunk 2077. Draw a gauge cluster in your browser (a
 
 ## Using it
 
-Download this repository (**Code → Download ZIP**), unzip it and open `index.html` in Chrome, Edge or Firefox. There is nothing to install. The page needs an internet connection for its fonts and for making the .zip.
+Open it at **https://oitenk.github.io/RedlineInk/**. Nothing to download or install.
+
+To use it offline, download this repository (**Code → Download ZIP**), unzip it and open `index.html` in Chrome, Edge or Firefox. The page still needs an internet connection for its fonts and for making the .zip.
 
 - Your current design is kept in the browser between visits.
 - **Save** puts a design in **My designs**, also in this browser.
@@ -22,9 +24,9 @@ Download this repository (**Code → Download ZIP**), unzip it and open `index.h
 | Text | A label, or a live readout: speed, RPM, gear, fuel percent, km/h or mph. |
 | Icon | A picture from an `.inkatlas`. |
 
-Any part can act as a light: it lights up on a Car Tuning light, a flag your own mod sets, RPM or speed above a value, or fuel below one, and then shows, hides, changes colour, blinks or fades. Lights that are off can stay in place in a dark "unlit" colour, as on a real dashboard, or disappear.
+Any part can act as a light: it lights up on a D.O.P.E. light, a flag your own mod sets, RPM or speed above a value, or fuel below one, and then shows, hides, changes colour, blinks or fades. Lights that are off can stay in place in a dark "unlit" colour, as on a real dashboard, or disappear.
 
-**Test drive**, under the canvas, moves everything the way the exported script will: speed, RPM, gear, fuel, units, the Car Tuning lights, and **Run a pull** for a run through the gears.
+**Test drive**, under the canvas, moves everything the way the exported script will: speed, RPM, gear, fuel, units, the D.O.P.E. lights, and **Run a pull** for a run through the gears.
 
 ### Exporting
 
@@ -32,7 +34,8 @@ Any part can act as a light: it lights up on a Car Tuning light, a flag your own
 
 **Feed it from** (in the design settings) chooses where the dashboard gets its readings:
 
-- **Car Tuning**: the dashboard sits in a window of its own on the HUD while V drives, fed by the car and by Car Tuning's lights and fuel. It can stay unlit while the car's power is off, and Car Tuning's "Dashboard size" setting scales it. It installs into `r6\scripts\CarTuning\Dashboards\<name>\`. Needs Car Tuning (not released yet) and [Codeware](https://github.com/psiberx/cp2077-codeware). If Car Tuning is removed, a dashboard left behind does nothing instead of stopping other script mods from loading.
+- **D.O.P.E.** (Dynamic Overhaul Physics Enhancement, the mod Redline Ink was first made for; its working name was Car
+  Tuning): the dashboard sits in a window of its own on the HUD while V drives, fed by the car and by D.O.P.E.'s lights and fuel. It can stay unlit while the car's power is off, and D.O.P.E.'s "Dashboard size" setting scales it. It installs into `r6\scripts\CarTuning\Dashboards\<name>\`. Needs D.O.P.E. (not released yet) and [Codeware](https://github.com/psiberx/cp2077-codeware). If D.O.P.E. is removed, a dashboard left behind does nothing instead of stopping other script mods from loading.
 - **The stock car HUD**: shown inside the game's own speedometer and fed by it. Third-person view only, and clipped to the speedometer's window.
 - **My own code**: for modders. Attach the dashboard to your own widget and feed it with `SetSpeed`, `SetRpm`, `SetGear`, `SetFuel`, `SetFlag` and `SetValue`.
 

@@ -568,7 +568,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
       flags: s.flags, values: s.values, lamps: s.lamps };
   }
 
-  // The Car Tuning lamps the design uses, and the power when the dash goes dark without it.
+  // The D.O.P.E. lamps the design uses, and the power when the dash goes dark without it.
   function lampNames() {
     const set = new Set();
     state.design.elements.forEach((e) => {
@@ -578,7 +578,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
     return G.CT_LAMPS.map((l) => l.key).filter((k) => set.has(k));
   }
 
-  // Fed from Car Tuning and dark without power, with the power off in the preview.
+  // Fed from D.O.P.E. and dark without power, with the power off in the preview.
   function dashDark() {
     const d = state.design;
     return d.hook === 'carTuning' && d.darkWithoutPower !== false && G.lampOf(simState(), 'power') === 0;
@@ -1230,10 +1230,10 @@ button, input, select, textarea { font: inherit; color: inherit; }
     if (el.type === 'image') {
       F.push(sect('Picture'));
       const icon = G.ctIconFor(el.atlas);
-      F.push('<label class="field wide"><span>Car Tuning icon</span><select data-icon data-rebuild>'
+      F.push('<label class="field wide"><span>D.O.P.E. icon</span><select data-icon data-rebuild>'
         + [['', 'None (my own atlas)']].concat(G.CT_ICONS.map((i) => [i.key, i.label]))
           .map(([k, l]) => '<option value="' + k + '"' + ((icon ? icon.key : '') === k ? ' selected' : '') + '>' + esc(l) + '</option>').join('')
-        + '</select><span class="help">Fills in the atlas, the part and the HUD\'s colour for one of Car Tuning\'s own icons.</span></label>');
+        + '</select><span class="help">Fills in the atlas, the part and the HUD\'s colour for one of D.O.P.E.\'s own icons.</span></label>');
       F.push(field({ key: 'atlas', label: 'Atlas path (.inkatlas)', type: 'text', wide: true, placeholder: 'mymod\\ui\\icons.inkatlas',
         help: 'The game loads the icon from here. Leave empty to export a plain box.' }, el));
       F.push(field({ key: 'part', label: 'Part name', type: 'text', wide: true, placeholder: 'traction' }, el));
@@ -1269,16 +1269,16 @@ button, input, select, textarea { font: inherit; color: inherit; }
       const l = el.light || {};
       const when = l.when || '';
       F.push('<label class="field wide"><span>Lights up when</span><select data-light="when" data-rebuild>'
-        + [['', 'Never (always shown)'], ['ct', 'A Car Tuning light is on'], ['flag', 'A flag your mod sets is on'],
+        + [['', 'Never (always shown)'], ['ct', 'A D.O.P.E. light is on'], ['flag', 'A flag your mod sets is on'],
           ['rpmAbove', 'RPM is above…'], ['speedAbove', 'Speed is above…'], ['fuelBelow', 'Fuel is below…']]
           .map(([k, t]) => '<option value="' + k + '"' + (when === k ? ' selected' : '') + '>' + t + '</option>').join('') + '</select></label>');
       if (when) {
         if (when === 'ct') {
           const lamp = G.ctLamp(l.lamp) || G.CT_LAMPS[0];
-          F.push('<label class="field wide"><span>Car Tuning light</span><select data-light="lamp" data-rebuild>'
+          F.push('<label class="field wide"><span>D.O.P.E. light</span><select data-light="lamp" data-rebuild>'
             + G.CT_LAMPS.map((x) => '<option value="' + x.key + '"' + (lamp.key === x.key ? ' selected' : '') + '>' + esc(x.label) + '</option>').join('')
             + '</select><span class="help">' + esc(lamp.help)
-            + (state.design.hook !== 'carTuning' ? ' Feed the dashboard from Car Tuning (dashboard settings) for it to light.' : '')
+            + (state.design.hook !== 'carTuning' ? ' Feed the dashboard from D.O.P.E. (dashboard settings) for it to light.' : '')
             + '</span></label>');
         } else if (when === 'flag') {
           F.push('<label class="field wide"><span>Flag name</span><input type="text" data-light="flag" value="' + esc(l.flag || '')
@@ -1306,7 +1306,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
             + '" step="0.05" min="0.1"></label>');
         } else if (l.effect === 'blink' || l.effect === 'blinkSteady') {
           F.push('<label class="field"><span>Blinks a second</span><input type="number" data-light="rate" value="' + esc(n(l.rate, 4))
-            + '" step="0.5" min="0.5"><span class="help">4 is the rate of Car Tuning\'s HUD lights.</span></label>');
+            + '" step="0.5" min="0.5"><span class="help">4 is the rate of D.O.P.E.\'s HUD lights.</span></label>');
         }
         if (['rect', 'line', 'text', 'image'].includes(el.type) && ['show', 'blink', 'flash'].includes(l.effect || 'show')) {
           const asDesign = state.design.offLights === 'hidden' ? 'hidden' : 'unlit';
@@ -1316,7 +1316,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
             + '</select></label>');
         }
         if (when === 'ct' && (l.effect || 'show') === 'show' && (G.ctLamp(l.lamp) || G.CT_LAMPS[0]).flashes) {
-          F.push('<p class="help" style="grid-column:1/-1;margin:0">Steady while lit and flashing four times a second while it flashes, exactly as Car Tuning\'s HUD light.</p>');
+          F.push('<p class="help" style="grid-column:1/-1;margin:0">Steady while lit and flashing four times a second while it flashes, exactly as D.O.P.E.\'s HUD light.</p>');
         }
       }
     }
@@ -1328,7 +1328,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
     const across = Math.round(n(d.width, 640) * (n(d.scale, 1) || 1) / 3840 * 100);
     return 'In game the dashboard is ' + across + '% of the screen\'s width: the HUD is laid out on 3840 × 2160 at any '
       + 'resolution. New designs start at 1.6. It grows from the corner it is anchored to, and players can resize it '
-      + 'with Car Tuning\'s "Dashboard size" setting.';
+      + 'with D.O.P.E.\'s "Dashboard size" setting.';
   }
 
   function designFields(d) {
@@ -1349,9 +1349,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
     F.push('<p class="help" id="scaleHint" style="grid-column:1/-1;margin:0">' + scaleHint(d) + '</p>');
     F.push(sect('Hook-up'));
     F.push(field({ key: 'hook', label: 'Feed it from', type: 'select', wide: true, rebuild: true,
-      options: [['carTuning', 'Car Tuning (its own window on the HUD)'], ['stock', 'The stock car HUD (automatic)'], ['none', 'My own code only']],
+      options: [['carTuning', 'D.O.P.E. (its own window on the HUD)'], ['stock', 'The stock car HUD (automatic)'], ['none', 'My own code only']],
       help: d.hook === 'none' ? 'Call Attach(parent), SetSpeed, SetRpm and SetGear yourself.'
-        : d.hook === 'carTuning' ? 'Shows in a window of its own while V drives, fed by the car and by Car Tuning\'s lights and fuel. Needs Car Tuning and Codeware.'
+        : d.hook === 'carTuning' ? 'Shows in a window of its own while V drives, fed by the car and by D.O.P.E.\'s lights and fuel. Needs D.O.P.E. and Codeware.'
           : 'Shows inside the stock car HUD (third-person view only, and clipped to its window) and receives its speed, RPM and gear.' }, d));
     if (d.hook !== 'none') F.push(field({ key: 'hideStock', label: 'Hide the stock gauges', type: 'check', wide: true }, d));
     if (d.hook === 'carTuning') F.push(field({ key: 'darkWithoutPower', label: 'Dark with the power off', type: 'check', wide: true,
@@ -1590,7 +1590,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
     const lamps = lampNames();
     if (lamps.length) {
       const words = ['off', 'lit', 'flashing'];
-      html += '<div class="ctl"><span>Car Tuning lights</span><div class="chips">' + lamps.map((k) => {
+      html += '<div class="ctl"><span>D.O.P.E. lights</span><div class="chips">' + lamps.map((k) => {
         const lamp = G.ctLamp(k), st = G.lampOf(simState(), k);
         return '<button class="chip" data-lamp="' + esc(k) + '" aria-pressed="' + (st > 0) + '" title="Click: off, lit'
           + (lamp.flashes ? ', flashing' : '') + '">' + esc(lamp.label) + ': ' + words[st] + '</button>';
@@ -1728,7 +1728,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
       const blob = await zip.generateAsync({ type: 'blob' });
       await saveFile(G.folderFor(state.design) + '.zip', blob);
       toast('Saved ' + G.folderFor(state.design) + '.zip. It unpacks into the game folder layout'
-        + (state.design.hook === 'carTuning' ? ', into Car Tuning\'s Dashboards folder.' : '.'));
+        + (state.design.hook === 'carTuning' ? ', into D.O.P.E.\'s Dashboards folder.' : '.'));
     } catch (e) {
       if (e && e.code === 'declined') return;
       if (e && e.code === 'rate_limited') { toast('A save is already waiting for an answer.'); return; }
