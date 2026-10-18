@@ -45,6 +45,8 @@
     { key: 'battery', label: 'Battery', help: 'Lit with the power on and the engine off, as a real car\'s battery light.' },
     { key: 'power', label: 'Power on', help: 'Lit while the car has power.' },
     { key: 'engine', label: 'Engine running', help: 'Lit while the engine runs.' },
+    { key: 'knock', label: 'Knock (fuel grade too low)',
+      help: 'Lit while the engine knocks on too low a fuel grade and so has less power.' },
   ];
   const ctLamp = (key) => CT_LAMPS.find((l) => l.key === key) || null;
 
