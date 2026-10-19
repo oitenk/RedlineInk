@@ -261,6 +261,20 @@
     return modeWordOf(el, Math.max(0, Math.min(2, Math.round(num(mode, 0)))));
   }
 
+  // And its colour in each mode (the text's own colour where one is not set). A light on the readout lights in the
+  // mode's colour.
+  const MODE_COLORS = ['modeComfortColor', 'modeSportColor', 'modeTrackColor'];
+  function modeColorOf(el, mode) {
+    return el[MODE_COLORS[mode]] || el.color;
+  }
+  // The colour a part is drawn in before its light does anything: a drive mode readout's is its mode's.
+  function baseColorOf(el, state) {
+    if (el.type === 'text' && el.content === 'driveMode') {
+      return modeColorOf(el, Math.max(0, Math.min(2, Math.round(num(state.driveMode, 0)))));
+    }
+    return el.color;
+  }
+
   // A distance in km as a dashboard shows it, in km or miles as the speed: whole units grouped (48,213), or a trip
   // to a tenth; --- before there is one (below 0).
   const KM_PER_MILE = 1.609344;
@@ -500,6 +514,14 @@
       }
     });
     const liveOf = (el) => live.find((l) => l.el === el);
+    // a part's colour before its light: a drive mode readout's follows the mode
+    const isModeText = (el) => el.type === 'text' && el.content === 'driveMode';
+    const baseColor = (el) => isModeText(el)
+      ? '(this.m_driveMode == 2 ? ' + color(modeColorOf(el, 2)) + ' : (this.m_driveMode == 1 ? ' + color(modeColorOf(el, 1))
+        + ' : ' + color(modeColorOf(el, 0)) + '))'
+      : color(el.color);
+    // whether a light tints the part (its unlit look, or "Change colour"), so the light sets its colour
+    const lightTints = (el) => !!(el.light && el.light.when) && (lightOffLook(design, el) === 'unlit' || el.light.effect === 'color');
 
     const L = [];
     const out = (s) => L.push(s);
@@ -857,6 +879,7 @@
     out('    this.m_driveMode = mode;');
     out('    if IsDefined(this.m_root) {');
     out('      this.RefreshMode();');
+    out('      this.RefreshLights();');
     out('    };');
     out('  }');
     out('');
@@ -1437,9 +1460,12 @@
 
     out('');
     out('  private func RefreshMode() -> Void {');
-    live.filter((l) => l.el.type === 'text' && l.el.content === 'driveMode')
-      .forEach((l) => out('    this.SetLabel(this.' + l.field + ', this.m_driveMode == 2 ? ' + str(modeWordOf(l.el, 2))
-        + ' : (this.m_driveMode == 1 ? ' + str(modeWordOf(l.el, 1)) + ' : ' + str(modeWordOf(l.el, 0)) + '));'));
+    live.filter((l) => isModeText(l.el)).forEach((l) => {
+      out('    this.SetLabel(this.' + l.field + ', this.m_driveMode == 2 ? ' + str(modeWordOf(l.el, 2))
+        + ' : (this.m_driveMode == 1 ? ' + str(modeWordOf(l.el, 1)) + ' : ' + str(modeWordOf(l.el, 0)) + '));');
+      // the mode's colour (a light that tints it sets it instead, in RefreshLights)
+      if (!lightTints(l.el)) out('    this.' + l.field + '.SetTintColor(' + baseColor(l.el) + ');');
+    });
     out('  }');
 
     out('');
@@ -1485,7 +1511,7 @@
       }
       if (lightOffLook(design, el) === 'unlit') {
         // shown in the unlit colour while off, as a real dashboard's lamps
-        const lit = color(el.color), dim = color(unlitColorOf(design));
+        const lit = baseColor(el), dim = color(unlitColorOf(design));
         if (lt.effect === 'flash') {
           out(p + 'this.' + l.flashField + ' = this.Flash(' + w + ', on, ' + f(num(lt.period, 0.6)) + ', '
             + f(clamp01(num(el.opacity, 1))) + ', this.' + l.flashField + ');');
@@ -1500,7 +1526,7 @@
       else if (lt.effect === 'color' && seg) {
         out(p + 'this.' + l.field + '.SetLight(on, ' + color(lt.onColor) + ');');
       } else if (lt.effect === 'color') {
-        out(p + w + '.SetTintColor(on ? ' + color(lt.onColor) + ' : ' + color(el.color) + ');');
+        out(p + w + '.SetTintColor(on ? ' + color(lt.onColor) + ' : ' + baseColor(el) + ');');
       } else if (lt.effect === 'flash') {
         out(p + 'this.' + l.flashField + ' = this.Flash(' + w + ', on, ' + f(num(lt.period, 0.6)) + ', '
           + f(clamp01(num(el.opacity, 1))) + ', this.' + l.flashField + ');');
@@ -1721,7 +1747,7 @@
     arcSegments, barSegments, lineRect, boxRect, segmentsFor,
     DIAL_MAX, dialNumbers, dialValues, dialPlace, dialTurn, dialBox, dialLabels, dialStep, dialCount,
     displaySpeed, rpmMax, sourceFraction, inRange, hasRange, textValue, gearText, lightOn, litCount, redFromIndex,
-    lightOffLook, unlitColorOf,
+    lightOffLook, unlitColorOf, baseColorOf,
     generate, check, fileNameFor, folderFor, installFolderFor, pascal, ident, rgb,
   };
 });

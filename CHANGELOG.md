@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.4
+
+- The drive mode readout can show each mode in its own colour (the preset: Comfort green, Sport amber, Track red). A
+  light on the readout lights in the mode's colour.
+
 ## 0.1.3
 
 - A drive mode readout: one text that shows D.O.P.E.'s drive mode (Comfort, Sport or Track) in your own words for

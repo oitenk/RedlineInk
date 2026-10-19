@@ -624,7 +624,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
   function elementSvg(el, live, defs) {
     const d = state.design;
-    let fill = el.color;
+    let fill = G.baseColorOf(el, live);
     let visible = true, flash = false, blink = 0, litFill = null;
     // without the car's power: unlit (dimmed, every light off), or hidden
     const darkNow = dashDark();
@@ -1042,7 +1042,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
     ['units', 'Speed units', 'km/h', () => part('text', { name: 'Speed units', x: center().x - 50, y: center().y + 40, w: 100, h: 22,
       content: 'units', size: 18, color: COLORS.muted })],
     ['drivemode', 'Drive mode', 'mode', () => part('text', { name: 'Drive mode', x: center().x - 60, y: 20, w: 120, h: 28,
-      content: 'driveMode', modeComfort: 'COMFORT', modeSport: 'SPORT', modeTrack: 'TRACK', style: 'Bold', size: 20, color: COLORS.amber })],
+      content: 'driveMode', modeComfort: 'COMFORT', modeSport: 'SPORT', modeTrack: 'TRACK', modeComfortColor: COLORS.green,
+      modeSportColor: COLORS.amber, modeTrackColor: COLORS.red, style: 'Bold', size: 20, color: COLORS.amber })],
     ['odometer', 'Odometer', 'odo', () => part('text', { name: 'Odometer', x: center().x - 80, y: center().y + 70, w: 160, h: 28,
       content: 'odometer', font: 'digital', style: 'Regular', size: 24, align: 'right' })],
     ['trip', 'Trip meter', 'trip', () => part('text', { name: 'Trip', x: center().x - 80, y: center().y + 98, w: 160, h: 24,
@@ -1109,7 +1110,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
     odometer: 'Shows the distance on the car, in km or miles as the speed. D.O.P.E. sends it; your own code sends it with SetDistance(km, tripKm).',
     trip: 'Shows the trip meter to a tenth, in km or miles as the speed. Reset it in D.O.P.E.\'s vehicle controls window.',
     distUnits: 'Shows km or mi, matching the odometer and the trip.',
-    driveMode: 'Shows D.O.P.E.\'s drive mode in your words for each mode. Leave one empty to show nothing in that mode.',
+    driveMode: 'Shows D.O.P.E.\'s drive mode in your words and colour for each mode. Leave a mode\'s text empty to show nothing in it.',
   };
 
   function field(spec, el) {
@@ -1230,6 +1231,11 @@ button, input, select, textarea { font: inherit; color: inherit; }
         [['modeComfort', 'Comfort text', 'COMFORT'], ['modeSport', 'Sport text', 'SPORT'], ['modeTrack', 'Track text', 'TRACK']].forEach(([k, label, word]) => {
           if (el[k] === undefined || el[k] === null) el[k] = word;
           F.push(field({ key: k, label: label, type: 'text' }, el));
+        });
+        // each mode's colour, the text's own until one is picked
+        [['modeComfortColor', 'Comfort colour'], ['modeSportColor', 'Sport colour'], ['modeTrackColor', 'Track colour']].forEach(([k, label]) => {
+          if (!el[k]) el[k] = el.color;
+          F.push(field({ key: k, label: label, type: 'color' }, el));
         });
       }
       if (el.content === 'units') {

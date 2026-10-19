@@ -153,7 +153,13 @@ const carTuning = {
       style: 'Medium', size: 18, align: 'left', color: '#8fa3af', opacity: 1 },
     { id: 'o4', type: 'text', name: 'Drive mode', x: 260, y: 20, w: 120, h: 28, content: 'driveMode', modeComfort: '',
       modeSport: 'SPORT "S"', modeTrack: 'TRACK\\R', font: 'raj', style: 'Bold', size: 20, align: 'center', color: '#ffb020', opacity: 1,
+      modeComfortColor: '#7fd38a', modeSportColor: '#ffb020', modeTrackColor: '#ff3d3d',
       light: { when: 'ct', lamp: 'engine', effect: 'show' } },
+    { id: 'o5', type: 'text', name: 'Mode colours', x: 260, y: 50, w: 120, h: 28, content: 'driveMode', font: 'raj', style: 'Bold',
+      size: 20, align: 'center', color: '#ffffff', opacity: 1, modeComfortColor: '#7fd38a', modeSportColor: '', modeTrackColor: '#ff3d3d' },
+    { id: 'o6', type: 'text', name: 'Mode on colour', x: 260, y: 80, w: 120, h: 28, content: 'driveMode', font: 'raj', style: 'Bold',
+      size: 20, align: 'center', color: '#ffffff', opacity: 1, modeComfortColor: '#7fd38a', modeSportColor: '#ffb020', modeTrackColor: '#ff3d3d',
+      light: { when: 'ct', lamp: 'headlights', effect: 'color', onColor: '#ffffff' } },
   ]),
 };
 // A design that uses D.O.P.E. lights without the D.O.P.E. feed, and a flag holding code: the checks catch both.
