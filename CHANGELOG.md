@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.3
+
+- D.O.P.E.'s drive mode lights: Comfort, Sport and Track, each lit in its mode.
+
 ## 0.1.2
 
 - Text readouts can show the odometer, the trip meter and the distance units (km or mi), in the same units as the

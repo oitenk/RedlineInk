@@ -53,6 +53,9 @@
       help: 'Lit while the engine knocks on too low a fuel grade and so has less power. Hidden with the fuel grades off.' },
     { key: 'checkEngine', label: 'Check engine', flashes: true,
       help: 'Lit while the engine\'s health is under 80% and it has less power; flashes in limp mode, under 15%.' },
+    { key: 'comfort', label: 'Comfort mode', help: 'Lit in the Comfort drive mode (D.O.P.E.\'s drive mode key, Numpad 3 to start with).' },
+    { key: 'sport', label: 'Sport mode', help: 'Lit in the Sport drive mode.' },
+    { key: 'track', label: 'Track mode', help: 'Lit in the Track drive mode.' },
   ];
   const ctLamp = (key) => CT_LAMPS.find((l) => l.key === key) || null;
 
