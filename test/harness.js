@@ -151,6 +151,9 @@ const carTuning = {
       style: 'Regular', size: 20, align: 'right', color: '#8fa3af', opacity: 1, light: { when: 'ct', lamp: 'headlights', effect: 'color', onColor: '#ff6b3d' } },
     { id: 'o3', type: 'text', name: 'Distance units', x: 565, y: 280, w: 40, h: 28, content: 'distUnits', font: 'raj',
       style: 'Medium', size: 18, align: 'left', color: '#8fa3af', opacity: 1 },
+    { id: 'o4', type: 'text', name: 'Drive mode', x: 260, y: 20, w: 120, h: 28, content: 'driveMode', modeComfort: '',
+      modeSport: 'SPORT "S"', modeTrack: 'TRACK\\R', font: 'raj', style: 'Bold', size: 20, align: 'center', color: '#ffb020', opacity: 1,
+      light: { when: 'ct', lamp: 'engine', effect: 'show' } },
   ]),
 };
 // A design that uses D.O.P.E. lights without the D.O.P.E. feed, and a flag holding code: the checks catch both.
@@ -164,6 +167,8 @@ const misfed = { name: 'Misfed', className: 'RedlineMisfedDash', module: 'Redlin
   { id: 'm4', type: 'numbers', name: 'Too many', cx: 50, cy: 50, r: 30, start: 150, sweep: 240, source: 'speed', step: 1,
     turn: 'along', font: 'raj', style: 'Medium', size: 10, color: '#ffffff', colorRed: '#ff0000', redFrom: 0.9, opacity: 1 },
   { id: 'm5', type: 'text', name: 'Odometer', x: 0, y: 0, w: 60, h: 20, content: 'odometer', font: 'raj', style: 'Medium',
+    size: 10, align: 'left', color: '#ffffff', opacity: 1 },
+  { id: 'm6', type: 'text', name: 'Mode', x: 0, y: 0, w: 60, h: 20, content: 'driveMode', font: 'raj', style: 'Medium',
     size: 10, align: 'left', color: '#ffffff', opacity: 1 }] };
 
 // One lamp hidden while off, against the design's unlit lights.

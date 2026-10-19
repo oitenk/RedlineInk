@@ -53,9 +53,6 @@
       help: 'Lit while the engine knocks on too low a fuel grade and so has less power. Hidden with the fuel grades off.' },
     { key: 'checkEngine', label: 'Check engine', flashes: true,
       help: 'Lit while the engine\'s health is under 80% and it has less power; flashes in limp mode, under 15%.' },
-    { key: 'comfort', label: 'Comfort mode', help: 'Lit in the Comfort drive mode (D.O.P.E.\'s drive mode key, Numpad 3 to start with).' },
-    { key: 'sport', label: 'Sport mode', help: 'Lit in the Sport drive mode.' },
-    { key: 'track', label: 'Track mode', help: 'Lit in the Track drive mode.' },
   ];
   const ctLamp = (key) => CT_LAMPS.find((l) => l.key === key) || null;
 
@@ -248,8 +245,20 @@
       case 'odometer': return distanceText(state.odometerKm, metric, false);
       case 'trip': return distanceText(state.tripKm, metric, true);
       case 'distUnits': return metric ? 'km' : 'mi';
+      case 'driveMode': return modeWord(el, state.driveMode);
       default: return el.text || '';
     }
+  }
+
+  // The drive mode readout: D.O.P.E.'s drive mode, 0 Comfort, 1 Sport, 2 Track, in the design's words for each (an
+  // empty one shows nothing in that mode).
+  const MODE_WORDS = [['modeComfort', 'COMFORT'], ['modeSport', 'SPORT'], ['modeTrack', 'TRACK']];
+  function modeWordOf(el, mode) {
+    const [key, word] = MODE_WORDS[mode];
+    return el[key] !== undefined && el[key] !== null ? String(el[key]) : word;
+  }
+  function modeWord(el, mode) {
+    return modeWordOf(el, Math.max(0, Math.min(2, Math.round(num(mode, 0)))));
   }
 
   // A distance in km as a dashboard shows it, in km or miles as the speed: whole units grouped (48,213), or a trip
@@ -426,6 +435,9 @@
       if (el.type === 'text' && (el.content === 'odometer' || el.content === 'trip') && design.hook !== 'carTuning'
         && design.hook !== 'none') {
         problems.push(label + ' shows a distance, but only D.O.P.E. (or your own code, with SetDistance) sends one, so it shows ---.');
+      }
+      if (el.type === 'text' && el.content === 'driveMode' && design.hook !== 'carTuning' && design.hook !== 'none') {
+        problems.push(label + ' shows the drive mode, but only D.O.P.E. (or your own code, with SetDriveMode) sends one, so it stays on its Comfort words.');
       }
       if (el.type === 'text' && el.locKey && !/^[A-Za-z0-9_.\-]+$/.test(el.locKey)) {
         problems.push(label + ' has a localization key with spaces or symbols.');
@@ -695,6 +707,7 @@
     out('  private let m_fuel: Float;');
     out('  private let m_odometer: Float;');
     out('  private let m_trip: Float;');
+    out('  private let m_driveMode: Int32;');
     out('  private let m_metric: Bool;');
     out('  private let m_flags: array<CName>;');
     out('  private let m_valueNames: array<CName>;');
@@ -835,6 +848,15 @@
     out('    this.m_trip = tripKm;');
     out('    if IsDefined(this.m_root) {');
     out('      this.RefreshDistance();');
+    out('    };');
+    out('  }');
+    out('');
+    out('  // The drive mode: 0 Comfort, 1 Sport, 2 Track.');
+    out('  public func SetDriveMode(mode: Int32) -> Void {');
+    out('    this.Defaults();');
+    out('    this.m_driveMode = mode;');
+    out('    if IsDefined(this.m_root) {');
+    out('      this.RefreshMode();');
     out('    };');
     out('  }');
     out('');
@@ -1353,7 +1375,7 @@
 
     out('');
     out('  private func RefreshAll() -> Void {');
-    ['Speed', 'Rpm', 'Gear', 'Fuel', 'Units', 'Distance', 'Values', 'Lights'].forEach((n) => out('    this.Refresh' + n + '();'));
+    ['Speed', 'Rpm', 'Gear', 'Fuel', 'Units', 'Distance', 'Mode', 'Values', 'Lights'].forEach((n) => out('    this.Refresh' + n + '();'));
     out('  }');
 
     out('');
@@ -1411,6 +1433,13 @@
     });
     live.filter((l) => l.el.type === 'text' && l.el.content === 'distUnits')
       .forEach((l) => out('    this.SetLabel(this.' + l.field + ', this.m_metric ? "km" : "mi");'));
+    out('  }');
+
+    out('');
+    out('  private func RefreshMode() -> Void {');
+    live.filter((l) => l.el.type === 'text' && l.el.content === 'driveMode')
+      .forEach((l) => out('    this.SetLabel(this.' + l.field + ', this.m_driveMode == 2 ? ' + str(modeWordOf(l.el, 2))
+        + ' : (this.m_driveMode == 1 ? ' + str(modeWordOf(l.el, 1)) + ' : ' + str(modeWordOf(l.el, 0)) + '));'));
     out('  }');
 
     out('');
@@ -1536,6 +1565,9 @@
       out('  };');
       if (els.some((e) => e.type === 'text' && (e.content === 'odometer' || e.content === 'trip'))) {
         out('  dash.SetDistance(CarTuningDash.Value(game, n"odometer"), CarTuningDash.Value(game, n"trip"));');
+      }
+      if (els.some((e) => e.type === 'text' && e.content === 'driveMode')) {
+        out('  dash.SetDriveMode(FloorF(CarTuningDash.Value(game, n"driveMode") + 0.5));');
       }
       lampsUsed.forEach((k) => out('  dash.SetLamp(' + cname(k) + ', CarTuningDash.Lamp(game, ' + cname(k) + '));'));
       if (dark) out('  dash.SetPowered(CarTuningDash.Lamp(game, n"power") >= 1);');

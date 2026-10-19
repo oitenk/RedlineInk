@@ -35,9 +35,9 @@ Any part can act as a light: it lights up on a D.O.P.E. light, a flag your own m
 **Feed it from** (in the design settings) chooses where the dashboard gets its readings:
 
 - **D.O.P.E.** (Dynamic Overhaul Physics Enhancement, the mod Redline Ink was first made for; its working name was Car
-  Tuning): the dashboard sits in a window of its own on the HUD while V drives, fed by the car and by D.O.P.E.'s lights, fuel and odometer. It can stay unlit while the car's power is off, and D.O.P.E.'s "Dashboard size" setting scales it. It installs into `r6\scripts\CarTuning\Dashboards\<name>\`. Needs D.O.P.E. (not released yet) and [Codeware](https://github.com/psiberx/cp2077-codeware). If D.O.P.E. is removed, a dashboard left behind does nothing instead of stopping other script mods from loading.
+  Tuning): the dashboard sits in a window of its own on the HUD while V drives, fed by the car and by D.O.P.E.'s lights, fuel, odometer and drive mode. It can stay unlit while the car's power is off, and D.O.P.E.'s "Dashboard size" setting scales it. It installs into `r6\scripts\CarTuning\Dashboards\<name>\`. Needs D.O.P.E. (not released yet) and [Codeware](https://github.com/psiberx/cp2077-codeware). If D.O.P.E. is removed, a dashboard left behind does nothing instead of stopping other script mods from loading.
 - **The stock car HUD**: shown inside the game's own speedometer and fed by it. Third-person view only, and clipped to the speedometer's window.
-- **My own code**: for modders. Attach the dashboard to your own widget and feed it with `SetSpeed`, `SetRpm`, `SetGear`, `SetFuel`, `SetDistance`, `SetFlag` and `SetValue`.
+- **My own code**: for modders. Attach the dashboard to your own widget and feed it with `SetSpeed`, `SetRpm`, `SetGear`, `SetFuel`, `SetDistance`, `SetDriveMode`, `SetFlag` and `SetValue`.
 
 All exports need [redscript](https://github.com/jac3km4/redscript).
 

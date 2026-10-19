@@ -2,7 +2,8 @@
 
 ## 0.1.3
 
-- D.O.P.E.'s drive mode lights: Comfort, Sport and Track, each lit in its mode.
+- A drive mode readout: one text that shows D.O.P.E.'s drive mode (Comfort, Sport or Track) in your own words for
+  each, with a preset and a Drive mode switch in the test drive.
 
 ## 0.1.2
 
