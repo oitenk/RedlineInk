@@ -201,6 +201,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .field .colorrow { flex-wrap: wrap; }
 .field .colorrow select { flex: 1 1 100%; }
 .field .colorrow input:disabled { opacity: 0.45; }
+.field textarea { font-family: var(--font-code); font-size: 12px; resize: vertical; min-width: 0; }
 .field .roles { display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px; }
 .field .roles .role { display: flex; flex-direction: row; align-items: center; gap: 6px; }
 .field .roles .role input[type="text"] { flex: 1 1 auto; width: auto; min-width: 0; font-family: inherit; font-size: 13px; }
@@ -1103,7 +1104,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
       ['value', 'Custom value from your mod']],
     text: [['static', 'Label'], ['speed', 'Speed number'], ['rpm', 'RPM number'], ['rpm1000', 'RPM in thousands'], ['gear', 'Gear'],
       ['fuelPct', 'Fuel percent'], ['units', 'Speed units (km/h or mph)'], ['odometer', 'Odometer'], ['trip', 'Trip meter'],
-      ['distUnits', 'Distance units (km or mi)'], ['driveMode', 'Drive mode (Comfort, Sport, Track)']],
+      ['distUnits', 'Distance units (km or mi)'], ['driveMode', 'Drive mode (Comfort, Sport, Track)'], ['carName', 'Car name'],
+      ['carRecord', 'Car record name (for the Cars rule)']],
   };
   SOURCE_OPTIONS.numbers = [['speed', 'Speed: 0 to full-scale speed'], ['rpm', 'RPM in thousands'], ['labels', 'My own labels']];
   const NUMBERS_HELP = {
@@ -1419,6 +1421,22 @@ button, input, select, textarea { font: inherit; color: inherit; }
           : 'The dashboard stays on screen, dimmed and with its lights off, until the car\'s power comes on, as a real one with the key off.' }, d));
       if (d.powerOff !== 'hidden') F.push(field({ key: 'unlitOpacity', label: 'Unlit brightness', type: 'percent', wide: true, min: 5, max: 80 }, d));
     }
+    F.push(sect('Cars'));
+    F.push(field({ key: 'cars', label: 'Shown on', type: 'select', wide: true, rebuild: true,
+      options: [['all', 'Every car (gives way to a dashboard made for the car)'], ['only', 'Only these cars']],
+      help: d.hook === 'carTuning' ? 'With several dashboards installed, D.O.P.E. shows the one most the car\'s own: one that names the car beats one for its class or maker, which beats one for every car.'
+        : 'A dashboard for other cars than these does not show.' }, d));
+    if (d.cars === 'only') {
+      G.CAR_CLASSES.forEach(([k, l]) => F.push(field({ key: k, label: l, type: 'check' }, d)));
+      F.push(field({ key: 'carMakers', label: 'Makers', type: 'text', wide: true, placeholder: 'Quadra, Arch, Rayfield',
+        help: 'Comma list, as the game names them (Quadra, Archer, Thorton, Rayfield, Mizutani, Villefort, Chevillon, Makigai, Mahir, Herrera, Yaiba, Brennan, Arch, Porsche).' }, d));
+      F.push('<label class="field wide"><span>Cars by record name</span><textarea data-key="carList" rows="4" spellcheck="false" placeholder="Vehicle.v_sport2_quadra_type66_player">'
+        + esc(d.carList || '') + '</textarea><span class="help">One per line. A Text part showing "Car record name" tells you a car\'s, modded cars included.</span></label>');
+      F.push('<label class="field wide"><span>Add a car from the game</span><select data-addcar><option value="">Choose…</option>'
+        + ['Car', 'Bike'].map((kind) => '<optgroup label="' + (kind === 'Car' ? 'Cars' : 'Bikes') + '">' + G.VANILLA_CARS.filter((c) => c.kind === kind)
+          .map((c) => '<option value="' + esc(c.id) + '">' + esc(c.label) + '</option>').join('') + '</optgroup>').join('')
+        + '</select><span class="help">Adds its record name, and its twins (the same car under another name) with it.</span></label>');
+    }
     F.push(sect('Colours'));
     const roles = G.paletteOf(d);
     F.push('<div class="field wide"><span>Palette</span>' + (roles.length ? '<div class="roles">' + roles.map((r, i) =>
@@ -1443,6 +1461,10 @@ button, input, select, textarea { font: inherit; color: inherit; }
     F.push(field({ key: 'gearMap', label: 'Gear numbers', type: 'select',
       options: [['stock', 'Stock HUD (0 = R)'], ['plain', 'Plain (-1 = R)']] }, d));
     F.push(field({ key: 'rpmFromCar', label: 'Read full-scale RPM from each car', type: 'check', wide: true }, d));
+    F.push(field({ key: 'rpmRedline', label: 'Red zones on RPM gauges', type: 'select', wide: true, rebuild: true,
+      options: [['design', 'Where the design puts them'], ['car', 'At the car\'s redline, the dial rounded up to a thousand']],
+      help: d.rpmRedline === 'car' ? 'In the game the dial runs to the next whole thousand above the car\'s redline (with its ECU tune, when D.O.P.E. knows it), the red zones and RPM lights start at the redline itself, and the RPM numbers reach the top. Here the design\'s own red zones are drawn.'
+        : 'Red zones and RPM lights sit at the share of full scale the design gives them, on every car.' }, d));
     return F.join('');
   }
 
@@ -1493,6 +1515,16 @@ button, input, select, textarea { font: inherit; color: inherit; }
       if (byName) role.name = inp.value;
       else role.color = inp.value;
       changed({ inspector: false, drive: false });
+      return;
+    }
+    if (inp.hasAttribute('data-addcar')) {
+      const car = G.VANILLA_CARS.find((c) => c.id === inp.value);
+      if (car) {
+        const have = G.carList(state.design);
+        [car.id].concat(car.twins).forEach((id) => { if (!have.includes(id)) have.push(id); });
+        state.design.carList = have.join('\n');
+        changed({ inspector: true, drive: false });
+      }
       return;
     }
     if (inp.hasAttribute('data-icon')) {

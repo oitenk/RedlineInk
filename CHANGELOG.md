@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.7
+
+- Cars: a dashboard can be for every car or only for the cars its rule names, by class (sports, standard, utility,
+  bikes), by maker or by record name, with a picker of the game's own cars. With several dashboards installed, D.O.P.E.
+  shows the one most the car's own: one that names the car beats one for its class or maker, which beats one for every
+  car. Needs the D.O.P.E. of 2026-10-24 or later for that referee.
+- The red zones on RPM gauges and the RPM lights can sit at the car's own redline, with the dial rounded up to the next
+  thousand, instead of at a fixed share of full scale; and D.O.P.E. now tells the dashboard the rev limit of a car with
+  an ECU tune, so a tuned car's dial grows with it.
+- Text readouts: the car's name, and its record name (to put a modded car on the Cars list).
+
 ## 0.1.6
 
 - Colour roles: the design has a palette of named colours (new designs start with Main, Accent, Warning and Dim) and any

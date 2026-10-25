@@ -272,6 +272,8 @@
       case 'trip': return distanceText(state.tripKm, metric, true);
       case 'distUnits': return metric ? 'km' : 'mi';
       case 'driveMode': return modeWord(el, state.driveMode);
+      case 'carName': return 'Quadra Type-66';
+      case 'carRecord': return 'Vehicle.v_sport2_quadra_type66_player';
       default: return el.text || '';
     }
   }
@@ -367,6 +369,87 @@
     while (taken.includes(id)) id = base + n++;
     return id;
   }
+
+  // ---- the dashboard's cars (2026-10-24): every car, or only the cars its rule names: by class (the record name's
+  // v_sport / v_standard / v_utility, bikes by the record's type), by maker (the record's manufacturer) or by record
+  // name. In the game each dashboard tells D.O.P.E.'s referee how much the car is its own (RuleFor: 1 every car, 2 a
+  // class or maker, 3 a name) and the most specific one shows. The vanilla cars V can own, for the editor's picker.
+  const CAR_CLASSES = [['carsSport', 'Sports cars', 'v_sport'], ['carsStandard', 'Standard cars', 'v_standard'],
+    ['carsUtility', 'Utility vehicles', 'v_utility'], ['carsBike', 'Bikes', '']];
+  const VANILLA_CARS = [
+    { id: 'Vehicle.v_sport1_herrera_outlaw_player', kind: 'Car', label: 'Herrera Outlaw', twins: ['Vehicle.v_sport1_herrera_outlaw_heist_player'] },
+    { id: 'Vehicle.v_sport1_herrera_riptide_player', kind: 'Car', label: 'Herrera Riptide', twins: [] },
+    { id: 'Vehicle.v_sport1_quadra_sport_r7_mrhands', kind: 'Car', label: 'Quadra Sport R7 Mrhands', twins: [] },
+    { id: 'Vehicle.v_sport1_quadra_sport_r7_netrunner', kind: 'Car', label: 'Quadra Sport R7 Netrunner', twins: [] },
+    { id: 'Vehicle.v_sport1_quadra_sport_r7_player', kind: 'Car', label: 'Quadra Sport R7', twins: ['Vehicle.v_sport1_quadra_sport_r7_player_02'] },
+    { id: 'Vehicle.v_sport1_quadra_turbo_player', kind: 'Car', label: 'Quadra Turbo', twins: [] },
+    { id: 'Vehicle.v_sport1_quadra_turbo_r_player', kind: 'Car', label: 'Quadra Turbo R', twins: [] },
+    { id: 'Vehicle.v_sport1_rayfield_aerondight_player', kind: 'Car', label: 'Rayfield Aerondight', twins: [] },
+    { id: 'Vehicle.v_sport1_rayfield_caliburn_player', kind: 'Car', label: 'Rayfield Caliburn', twins: ['Vehicle.v_sport1_rayfield_caliburn_02_player', 'Vehicle.v_sport1_rayfield_caliburn_mordred_player'] },
+    { id: 'Vehicle.v_sport1_yaiba_semimaru_player', kind: 'Car', label: 'Yaiba Semimaru', twins: [] },
+    { id: 'Vehicle.v_sport2_mizutani_shion_base_player', kind: 'Car', label: 'Mizutani Shion Base', twins: [] },
+    { id: 'Vehicle.v_sport2_mizutani_shion_nomad_02_player', kind: 'Car', label: 'Mizutani Shion Nomad 02', twins: ['Vehicle.v_sport2_mizutani_shion_nomad_player_missiles'] },
+    { id: 'Vehicle.v_sport2_mizutani_shion_nomad_player', kind: 'Car', label: 'Mizutani Shion Nomad', twins: [] },
+    { id: 'Vehicle.v_sport2_mizutani_shion_player', kind: 'Car', label: 'Mizutani Shion', twins: [] },
+    { id: 'Vehicle.v_sport2_mizutani_shion_targa_player', kind: 'Car', label: 'Mizutani Shion Targa', twins: [] },
+    { id: 'Vehicle.v_sport2_porsche_911turbo_cabrio_player', kind: 'Car', label: 'Porsche 911turbo Cabrio', twins: [] },
+    { id: 'Vehicle.v_sport2_porsche_911turbo_player', kind: 'Car', label: 'Porsche 911turbo', twins: [] },
+    { id: 'Vehicle.v_sport2_quadra_type66_02_player', kind: 'Car', label: 'Quadra Type66 02', twins: [] },
+    { id: 'Vehicle.v_sport2_quadra_type66_avenger_player', kind: 'Car', label: 'Quadra Type66 Avenger', twins: [] },
+    { id: 'Vehicle.v_sport2_quadra_type66_base_player', kind: 'Car', label: 'Quadra Type66 Base', twins: [] },
+    { id: 'Vehicle.v_sport2_quadra_type66_gt_player', kind: 'Car', label: 'Quadra Type66 Gt', twins: [] },
+    { id: 'Vehicle.v_sport2_quadra_type66_nomad_ncu_player', kind: 'Car', label: 'Quadra Type66 Nomad Ncu', twins: [] },
+    { id: 'Vehicle.v_sport2_quadra_type66_nomad_player', kind: 'Car', label: 'Quadra Type66 Nomad', twins: ['Vehicle.v_sport2_quadra_type66_nomad_player_03'] },
+    { id: 'Vehicle.v_sport2_quadra_type66_nomad_tribute', kind: 'Car', label: 'Quadra Type66 Nomad Tribute', twins: [] },
+    { id: 'Vehicle.v_sport2_quadra_type66_player', kind: 'Car', label: 'Quadra Type66', twins: [] },
+    { id: 'Vehicle.v_sport2_villefort_alvarado_hearse_player', kind: 'Car', label: 'Villefort Alvarado Hearse', twins: [] },
+    { id: 'Vehicle.v_sport2_villefort_alvarado_player', kind: 'Car', label: 'Villefort Alvarado', twins: ['Vehicle.v_sport2_villefort_alvarado_valentinos_player'] },
+    { id: 'Vehicle.v_sport2_villefort_deleon_player', kind: 'Car', label: 'Villefort Deleon', twins: [] },
+    { id: 'Vehicle.v_sport2_villefort_deleon_sport_player', kind: 'Car', label: 'Villefort Deleon Sport', twins: [] },
+    { id: 'Vehicle.v_standard25_mahir_supron_gt_player', kind: 'Car', label: 'Mahir Supron Gt', twins: [] },
+    { id: 'Vehicle.v_standard25_mahir_supron_player', kind: 'Car', label: 'Mahir Supron', twins: [] },
+    { id: 'Vehicle.v_standard25_thorton_colby_nomad_player', kind: 'Car', label: 'Thorton Colby Nomad', twins: ['Vehicle.v_standard25_thorton_colby_nomad_player_missiles'] },
+    { id: 'Vehicle.v_standard25_thorton_colby_pickup_kurtz_player', kind: 'Car', label: 'Thorton Colby Pickup Kurtz', twins: [] },
+    { id: 'Vehicle.v_standard25_thorton_colby_pickup_player', kind: 'Car', label: 'Thorton Colby Pickup', twins: ['Vehicle.v_standard25_thorton_colby_pickup_02_player'] },
+    { id: 'Vehicle.v_standard25_thorton_merrimac_player', kind: 'Car', label: 'Thorton Merrimac', twins: [] },
+    { id: 'Vehicle.v_standard25_villefort_columbus_player', kind: 'Car', label: 'Villefort Columbus', twins: [] },
+    { id: 'Vehicle.v_standard2_archer_bandit_player', kind: 'Car', label: 'Archer Bandit', twins: [] },
+    { id: 'Vehicle.v_standard2_archer_hella_player', kind: 'Car', label: 'Archer Hella', twins: [] },
+    { id: 'Vehicle.v_standard2_archer_quartz_base_player', kind: 'Car', label: 'Archer Quartz Base', twins: [] },
+    { id: 'Vehicle.v_standard2_archer_quartz_nomad_player', kind: 'Car', label: 'Archer Quartz Nomad', twins: ['Vehicle.v_standard2_archer_quartz_nomad_player_02'] },
+    { id: 'Vehicle.v_standard2_archer_quartz_player', kind: 'Car', label: 'Archer Quartz', twins: [] },
+    { id: 'Vehicle.v_standard2_chevalier_thrax_player', kind: 'Car', label: 'Chevalier Thrax', twins: [] },
+    { id: 'Vehicle.v_standard2_makigai_maimai_player', kind: 'Car', label: 'Makigai Maimai', twins: [] },
+    { id: 'Vehicle.v_standard2_mizutani_hozuki_gt_player', kind: 'Car', label: 'Mizutani Hozuki Gt', twins: [] },
+    { id: 'Vehicle.v_standard2_mizutani_hozuki_player', kind: 'Car', label: 'Mizutani Hozuki', twins: [] },
+    { id: 'Vehicle.v_standard2_thorton_colby_gt_player', kind: 'Car', label: 'Thorton Colby Gt', twins: [] },
+    { id: 'Vehicle.v_standard2_thorton_colby_player', kind: 'Car', label: 'Thorton Colby', twins: [] },
+    { id: 'Vehicle.v_standard2_thorton_galena_bobas_player', kind: 'Car', label: 'Thorton Galena Bobas', twins: [] },
+    { id: 'Vehicle.v_standard2_thorton_galena_gt_player', kind: 'Car', label: 'Thorton Galena Gt', twins: [] },
+    { id: 'Vehicle.v_standard2_thorton_galena_nomad_player', kind: 'Car', label: 'Thorton Galena Nomad', twins: ['Vehicle.v_standard2_thorton_galena_nomad_player_missiles'] },
+    { id: 'Vehicle.v_standard2_thorton_galena_player', kind: 'Car', label: 'Thorton Galena', twins: [] },
+    { id: 'Vehicle.v_standard2_villefort_cortes_player', kind: 'Car', label: 'Villefort Cortes', twins: ['Vehicle.v_standard2_villefort_cortes_delamain_player', 'Vehicle.v_delamain_taxi'] },
+    { id: 'Vehicle.v_standard3_chevalier_emperor_player', kind: 'Car', label: 'Chevalier Emperor', twins: [] },
+    { id: 'Vehicle.v_standard3_mahir_supron_kurtz_player', kind: 'Car', label: 'Mahir Supron Kurtz', twins: [] },
+    { id: 'Vehicle.v_standard3_makigai_tanishi_player', kind: 'Car', label: 'Makigai Tanishi', twins: [] },
+    { id: 'Vehicle.v_standard3_makigai_tanishi_player_mr_hands', kind: 'Car', label: 'Makigai Tanishi Player Mr Hands', twins: [] },
+    { id: 'Vehicle.v_standard3_militech_hellhound_player', kind: 'Car', label: 'Militech Hellhound', twins: [] },
+    { id: 'Vehicle.v_standard3_thorton_mackinaw_02_player', kind: 'Car', label: 'Thorton Mackinaw 02', twins: ['Vehicle.v_standard3_thorton_mackinaw_ncu_player'] },
+    { id: 'Vehicle.v_standard3_thorton_mackinaw_player', kind: 'Car', label: 'Thorton Mackinaw', twins: [] },
+    { id: 'Vehicle.v_utility4_chevalier_legatus_player', kind: 'Car', label: 'Chevalier Legatus', twins: [] },
+    { id: 'Vehicle.v_utility4_thorton_mackinaw_bmf_player', kind: 'Car', label: 'Thorton Mackinaw Bmf', twins: [] },
+    { id: 'Vehicle.v_sportbike1_yaiba_kusanagi_player', kind: 'Bike', label: 'Sportbike1 Yaiba Kusanagi', twins: ['Vehicle.v_sportbike1_yaiba_muramasa_naked', 'Vehicle.v_sportbike1_yaiba_muramasa_regular', 'Vehicle.v_sportbike1_yaiba_muramasa_naked_as', 'Vehicle.v_sportbike1_yaiba_muramasa_naked_nr', 'Vehicle.v_sportbike1_yaiba_muramasa_naked_ns', 'Vehicle.v_sportbike1_yaiba_muramasa_regular_as', 'Vehicle.v_sportbike1_yaiba_muramasa_regular_nr', 'Vehicle.v_sportbike1_yaiba_muramasa_regular_ns', 'Vehicle.v_sportbike1_yaiba_muramasa_naked_as_nr', 'Vehicle.v_sportbike1_yaiba_muramasa_naked_as_ns', 'Vehicle.v_sportbike1_yaiba_muramasa_naked_ns_nr', 'Vehicle.v_sportbike1_yaiba_muramasa_regular_as_nr', 'Vehicle.v_sportbike1_yaiba_muramasa_regular_as_ns', 'Vehicle.v_sportbike1_yaiba_muramasa_regular_ns_nr', 'Vehicle.v_sportbike1_yaiba_muramasa_naked_as_ns_nr', 'Vehicle.v_sportbike1_yaiba_muramasa_regular_as_ns_nr'] },
+    { id: 'Vehicle.v_sportbike1_yaiba_kusanagi_player_02', kind: 'Bike', label: 'Sportbike1 Yaiba Kusanagi 02', twins: [] },
+    { id: 'Vehicle.v_sportbike1_yaiba_kusanagi_tyger_player', kind: 'Bike', label: 'Sportbike1 Yaiba Kusanagi Tyger', twins: ['Vehicle.v_sportbike1_yaiba_kusanagi_player_03'] },
+    { id: 'Vehicle.v_sportbike2_arch_jackie_tuned_player', kind: 'Bike', label: 'Sportbike2 Arch Jackie Tuned', twins: [] },
+    { id: 'Vehicle.v_sportbike2_arch_player', kind: 'Bike', label: 'Sportbike2 Arch', twins: ['Vehicle.v_sportbike2_arch_linas_player', 'Vehicle.v_sportbike2_arch_tyger_player', 'Vehicle.v_sportbike2_arch_jackie_player', 'Vehicle.v_sportbike2_arch_player_03'] },
+    { id: 'Vehicle.v_sportbike2_arch_player_02', kind: 'Bike', label: 'Sportbike2 Arch 02', twins: [] },
+    { id: 'Vehicle.v_sportbike3_brennan_apollo_player', kind: 'Bike', label: 'Sportbike3 Brennan Apollo', twins: ['Vehicle.v_sportbike3_brennan_apollo_nomad_player'] },
+    { id: 'Vehicle.v_sportbike3_brennan_apollo_player_02', kind: 'Bike', label: 'Sportbike3 Brennan Apollo 02', twins: [] }
+  ];
+  const carList = (design) => String(design.carList || '').split(/[\n,;]+/).map((s) => s.trim()).filter(Boolean);
+  const carMakers = (design) => String(design.carMakers || '').split(/[\n,;]+/).map((s) => s.trim()).filter(Boolean);
+  const carsOnly = (design) => design.cars === 'only';
 
   // A D.O.P.E. lamp in the preview: 0 off, 1 lit, 2 flashing.
   // -1 for a lamp the car does not have (optional lamps only).
@@ -472,6 +555,12 @@
     roles.forEach((r, i) => {
       if (!roleNames[i]) problems.push('Colour ' + (i + 1) + ' of the palette has no name; the Mod Settings menu shows it by its name.');
       else if (roleNames.indexOf(roleNames[i]) !== i) problems.push('Two colours of the palette are called "' + roleNames[i] + '".');
+    });
+    if (carsOnly(design) && !carList(design).length && !carMakers(design).length && !CAR_CLASSES.some(([k]) => design[k])) {
+      problems.push('The dashboard is for "only these cars" but none is chosen, so it shows on no car.');
+    }
+    carList(design).forEach((id) => {
+      if (!/^Vehicle\.[A-Za-z0-9_]+$/.test(id)) problems.push('"' + id + '" is not a vehicle record name (Vehicle.v_...).');
     });
     const gone = (v) => isRole(v) && !roleOf(design, v);
     if (gone(design.offColor)) problems.push('The unlit colour is a colour no longer in the palette, so it is white.');
@@ -593,6 +682,9 @@
     // a colour in the script: a literal, or the dashboard's palette entry for a role (changeable in the game)
     const roles = paletteOf(design);
     const roleIndex = (v) => roles.findIndex((r) => '@' + r.id === v);
+    // the red zones and RPM lights follow the car's redline, the dial rounded up to a thousand
+    const carRedline = design.rpmRedline === 'car';
+    const carTexts = els.some((e) => e.type === 'text' && (e.content === 'carName' || e.content === 'carRecord'));
     const col = (v) => (isRole(v) ? (roleIndex(v) >= 0 ? 'this.Col(' + roleIndex(v) + ')' : color('#ffffff')) : color(v));
     const baseColor = (el) => isModeText(el)
       ? '(this.m_driveMode == 2 ? ' + col(modeColorOf(el, 2)) + ' : (this.m_driveMode == 1 ? ' + col(modeColorOf(el, 1))
@@ -646,6 +738,14 @@
     out('  private let m_painted: Bool;');
     out('  private let m_fraction: Float;');
     out('  private let m_lightOn: Bool;');
+    out('');
+    out('  // The first red segment, moved on the road to the car\'s redline; painted again on the next refresh.');
+    out('  public func SetRedFrom(index: Int32) -> Void {');
+    out('    if index != this.m_redFrom {');
+    out('      this.m_redFrom = index;');
+    out('      this.m_painted = false;');
+    out('    };');
+    out('  }');
     out('  private let m_lightColor: HDRColor;');
     out('');
     out('  public func Add(part: ref<inkRectangle>) -> Void {');
@@ -803,6 +903,9 @@
     out('  private let m_speed: Float;');
     out('  private let m_rpm: Float;');
     out('  private let m_rpmMax: Float;');
+    out('  private let m_redline: Float;');
+    out('  private let m_carName: String;');
+    out('  private let m_carRecord: String;');
     out('  private let m_gear: Int32;');
     out('  private let m_fuel: Float;');
     out('  private let m_odometer: Float;');
@@ -973,9 +1076,29 @@
     out('  // The RPM at full scale on RPM gauges.');
     out('  public func SetRpmMax(rpm: Float) -> Void {');
     out('    this.Defaults();');
-    out('    if rpm > 0.0 {');
-    out('      this.m_rpmMax = rpm;');
+    out('    if rpm <= 0.0 || rpm == this.m_redline {');
+    out('      return;');
     out('    };');
+    out('    this.m_redline = rpm;');
+    if (carRedline) {
+      out('    // the dial up to the next whole thousand, the red zones from the car\'s own redline');
+      out('    this.m_rpmMax = Cast<Float>(CeilF(rpm / 1000.0 - 0.0001)) * 1000.0;');
+      live.filter((l) => (l.el.type === 'arc' || l.el.type === 'bar') && l.el.source === 'rpm' && clamp01(num(l.el.redFrom, 1)) < 1)
+        .forEach((l) => {
+          const n = Math.max(1, Math.round(num(l.el.segments, 1)));
+          out('    if IsDefined(this.' + l.field + ') {');
+          out('      this.' + l.field + '.SetRedFrom(Cast<Int32>(FloorF(' + f(n) + ' * this.m_redline / this.m_rpmMax + 0.5)));');
+          out('    };');
+        });
+      live.filter((l) => l.el.type === 'numbers' && l.el.source === 'rpm' && clamp01(num(l.el.redFrom, 1)) < 1).forEach((l) => {
+        out('    if IsDefined(this.' + l.field + ') {');
+        out('      this.' + l.field + '.m_redFrom = this.m_redline / this.m_rpmMax;');
+        out('      this.' + l.field + '.m_laidFor = -1.0;');
+        out('    };');
+      });
+    } else {
+      out('    this.m_rpmMax = rpm;');
+    }
     out('    if IsDefined(this.m_root) {');
     out('      this.RefreshRpm();');
     out('      this.RefreshLights();');
@@ -1135,6 +1258,14 @@
     out('      return;');
     out('    };');
     out('    this.m_vehicle = vehicle;');
+    if (carTexts) {
+      out('    this.m_carRecord = TDBID.ToStringDEBUG(vehicle.GetRecordID());');
+      out('    let rec: ref<Vehicle_Record> = vehicle.GetRecord();');
+      out('    this.m_carName = IsDefined(rec) ? LocKeyToString(rec.DisplayName()) : "";');
+      out('    if IsDefined(this.m_root) {');
+      out('      this.RefreshCar();');
+      out('    };');
+    }
     if (design.rpmFromCar !== false) {
       out('    let record = vehicle.GetRecord();');
       out('    if IsDefined(record) && IsDefined(record.VehEngineData()) {');
@@ -1143,6 +1274,61 @@
       out('        this.SetRpmMax(maxRpm);');
       out('      };');
       out('    };');
+    }
+    out('  }');
+    out('');
+    if (carRedline) {
+      out('');
+      out('  private func RedlineOrMax() -> Float {');
+      out('    return this.m_redline > 0.0 ? this.m_redline : this.m_rpmMax;');
+      out('  }');
+    }
+    out('');
+    out('  // How much the car is this dashboard\'s: 0 not at all, 1 as the dashboard for every car, 2 by its class or');
+    out('  // maker, 3 by name (D.O.P.E.\'s referee shows the highest).');
+    out('  public func RuleFor(vehicle: ref<VehicleObject>) -> Int32 {');
+    out('    if !IsDefined(vehicle) {');
+    out('      return 0;');
+    out('    };');
+    if (!carsOnly(design)) {
+      out('    return 1;');
+    } else {
+      const names = carList(design), makers = carMakers(design);
+      const classes = CAR_CLASSES.filter(([k]) => design[k]);
+      if (names.length) {
+        out('    let name: String = TDBID.ToStringDEBUG(vehicle.GetRecordID());');
+        out('    if ' + names.map((id) => 'Equals(name, ' + str(id) + ')').join(' || ') + ' {');
+        out('      return 3;');
+        out('    };');
+      }
+      if (makers.length || classes.length) {
+        out('    let record: ref<Vehicle_Record> = vehicle.GetRecord();');
+        out('    if !IsDefined(record) {');
+        out('      return 0;');
+        out('    };');
+      }
+      if (makers.length) {
+        out('    let maker: String = IsDefined(record.Manufacturer()) ? record.Manufacturer().EnumName() : "";');
+        out('    if ' + makers.map((m) => 'Equals(maker, ' + str(m) + ')').join(' || ') + ' {');
+        out('      return 2;');
+        out('    };');
+      }
+      if (classes.length) {
+        out('    let bike: Bool = IsDefined(record.Type()) && Equals(record.Type().Type(), gamedataVehicleType.Bike);');
+        const byName = classes.filter(([, , prefix]) => prefix);
+        if (byName.length) {
+          if (!names.length) out('    let name: String = TDBID.ToStringDEBUG(vehicle.GetRecordID());');
+          out('    if !bike && (' + byName.map(([, , prefix]) => 'StrContains(name, ' + str(prefix) + ')').join(' || ') + ') {');
+          out('      return 2;');
+          out('    };');
+        }
+        if (classes.some(([k]) => k === 'carsBike')) {
+          out('    if bike {');
+          out('      return 2;');
+          out('    };');
+        }
+      }
+      out('    return 0;');
     }
     out('  }');
     out('');
@@ -1535,7 +1721,7 @@
 
     out('');
     out('  private func RefreshAll() -> Void {');
-    ['Speed', 'Rpm', 'Gear', 'Fuel', 'Units', 'Distance', 'Mode', 'Values', 'Lights'].forEach((n) => out('    this.Refresh' + n + '();'));
+    ['Speed', 'Rpm', 'Gear', 'Fuel', 'Units', 'Distance', 'Mode', 'Car', 'Values', 'Lights'].forEach((n) => out('    this.Refresh' + n + '();'));
     out('  }');
 
     out('');
@@ -1596,6 +1782,13 @@
     out('  }');
 
     out('');
+    out('  private func RefreshCar() -> Void {');
+    live.filter((l) => l.el.type === 'text' && l.el.content === 'carName')
+      .forEach((l) => out('    this.SetLabel(this.' + l.field + ', this.m_carName);'));
+    live.filter((l) => l.el.type === 'text' && l.el.content === 'carRecord')
+      .forEach((l) => out('    this.SetLabel(this.' + l.field + ', this.m_carRecord);'));
+    out('  }');
+    out('');
     out('  private func RefreshMode() -> Void {');
     live.filter((l) => isModeText(l.el)).forEach((l) => {
       out('    this.SetLabel(this.' + l.field + ', this.m_driveMode == 2 ? ' + str(modeWordOf(l.el, 2))
@@ -1631,7 +1824,7 @@
         const lamp = cname(lampKey);
         cond = asHud ? 'this.LampOn(' + lamp + ')' : 'this.Lamp(' + lamp + ') >= 1';
       } else if (lt.when === 'flag') cond = 'this.HasFlag(' + cname(String(lt.flag || 'flag').trim()) + ')';
-      else if (lt.when === 'rpmAbove') cond = 'this.m_rpm >= this.m_rpmMax * ' + f(num(lt.threshold, 0.9));
+      else if (lt.when === 'rpmAbove') cond = 'this.m_rpm >= ' + (carRedline ? 'this.RedlineOrMax()' : 'this.m_rpmMax') + ' * ' + f(num(lt.threshold, 0.9));
       else if (lt.when === 'speedAbove') cond = 'this.DisplaySpeed() >= ' + f(num(lt.threshold, 100));
       else cond = 'this.m_fuel <= ' + f(num(lt.threshold, 0.15));
       out('    on = ' + (dark ? 'this.m_powered && ' + (/ [|&?]/.test(cond) ? '(' + cond + ')' : cond) : cond) + ';  // ' + (el.name || el.type));
@@ -1884,9 +2077,19 @@
       out('    return;');
       out('  };');
       out('  let dash: ref<' + C + '> = system.Dash();');
+      out('  // the dashboard\'s cars (RuleFor) and D.O.P.E.\'s referee: a dashboard made for the car beats one for every car');
+      out('  let level: Int32 = dash.RuleFor(vehicle);');
+      out('  if level == 0 || !CarTuningDash.Claim(game, ' + cname(C) + ', vehicle, level) {');
+      out('    dash.Detach();');
+      out('    return;');
+      out('  };');
       out('  dash.SetSizeFactor(CarTuningDash.Value(game, n"size"));');
       out('  dash.Attach(layer.GetVirtualWindow());');
       out('  dash.UseVehicle(vehicle);');
+      if (design.rpmFromCar !== false) {
+        out('  // the car\'s rev limit with its ECU tune, where D.O.P.E. knows it (-1 before)');
+        out('  dash.SetRpmMax(CarTuningDash.Value(game, n"rpmMax"));');
+      }
       out('  let board: ref<IBlackboard> = vehicle.GetBlackboard();');
       out('  dash.SetSpeed(Vector4.Length(vehicle.GetLinearVelocity()));');
       out('  dash.SetRpm(board.GetFloat(GetAllBlackboardDefs().Vehicle.RPMValue));');
@@ -1956,6 +2159,10 @@
       out('    return null;');
       out('  };');
       out('  let dash: ref<' + C + '> = system.Dash();');
+      out('  if dash.RuleFor(vehicle) == 0 {');
+      out('    dash.DetachFrom(root);');
+      out('    return null;');
+      out('  };');
       if (roles.length) out('  system.ApplyColours();');
       out('  dash.Attach(root);');
       if (design.hideStock !== false) out('  dash.HideOthers();');
@@ -2056,6 +2263,7 @@
     DIAL_MAX, dialNumbers, dialValues, dialPlace, dialTurn, dialBox, dialLabels, dialStep, dialCount,
     displaySpeed, rpmMax, sourceFraction, inRange, hasRange, textValue, gearText, lightOn, litCount, redFromIndex,
     lightOffLook, unlitColorOf, baseColorOf, isRole, paletteOf, roleOf, resolveColor, resolveEl, roleId, COLOR_KEYS, MAX_ROLES,
+    CAR_CLASSES, VANILLA_CARS, carList, carMakers, carsOnly,
     generate, check, fileNameFor, folderFor, installFolderFor, pascal, ident, rgb,
   };
 });

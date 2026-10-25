@@ -21,7 +21,7 @@ To use it offline, download this repository (**Code → Download ZIP**), unzip i
 | Arc, Bar | A run of segments that fills with a reading, with a red zone. An arc can cover only part of its reading, such as a shift light ring over the top of the revs. |
 | Needle | Turns with a reading. |
 | Numbers | Numbers around a dial: speed up to the full-scale speed, RPM in thousands (laid out again for each car's own redline), or your own labels such as E, 1/2, F. Upright, or turned along the arc. **Line up with** copies a needle's or an arc's centre and angles. |
-| Text | A label, or a live readout: speed, RPM, gear, fuel percent, km/h or mph. |
+| Text | A label, or a live readout: speed, RPM, gear, fuel percent, km/h or mph, odometer, trip, drive mode, the car's name or record name. |
 | Icon | A picture from an `.inkatlas`. |
 
 Any part can act as a light: it lights up on a D.O.P.E. light, a flag your own mod sets, RPM or speed above a value, or fuel below one, and then shows, hides, changes colour, blinks or fades. Lights that are off can stay in place in a dark "unlit" colour, as on a real dashboard, or disappear.
@@ -43,7 +43,11 @@ Any part can act as a light: it lights up on a D.O.P.E. light, a flag your own m
 
 All exports need [redscript](https://github.com/jac3km4/redscript).
 
-Each export is a mod of its own. Give each dashboard its own class name: two exports with the same class name clash. Two dashboards installed at once both show.
+Each export is a mod of its own. Give each dashboard its own class name: two exports with the same class name clash.
+
+**Cars** (in the design settings): a dashboard can be for every car, or only for the cars its rule names: by class (sports, standard, utility, bikes), by maker, or by record name, with a picker of the game's own cars (a Text part showing the car's record name tells you a modded car's). With several D.O.P.E.-fed dashboards installed, D.O.P.E. shows the one most the car's own: one that names the car beats one for its class or maker, which beats one for every car. Stock-HUD dashboards only follow their own rule.
+
+**Red zones at the car's redline** (in the readings): the red zones on RPM gauges and the RPM lights can sit at each car's own redline, the dial rounded up to the next thousand, instead of at a fixed share of full scale. D.O.P.E. tells the dashboard a tuned car's rev limit.
 
 ## Development
 
