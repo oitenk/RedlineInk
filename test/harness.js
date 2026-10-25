@@ -97,6 +97,7 @@ const full = {
 };
 
 const plain = {
+  palette: [{ id: 'main', name: 'Main', color: '#e8f1f6' }],
   name: '3 minimal dash', className: '', module: '', offLights: 'hidden',
   width: 400, height: 200, anchor: 'TopRight', offsetX: -20, offsetY: 30, scale: 0.8,
   hook: 'none', hideStock: false, units: 'mph', speedMax: 160, rpmMax: 7000, rpmFromCar: false,
@@ -127,9 +128,13 @@ const carTuning = {
   width: 640, height: 320, anchor: 'BottomCenter', offsetX: 0, offsetY: -30, scale: 1,
   hook: 'carTuning', hideStock: true, darkWithoutPower: true, units: 'kmh', speedMax: 260, rpmMax: 8000,
   rpmFromCar: true, gearMap: 'stock',
+  palette: [{ id: 'main', name: 'Main', color: '#e8f1f6' }, { id: 'accent', name: 'Accent', color: '#ffb020' },
+    { id: 'warning', name: 'Warning', color: '#ff2a2a' }],
   elements: lampEls.concat([
     { id: 'n1', type: 'needle', name: 'Speed needle', cx: 320, cy: 200, length: 120, thickness: 4, start: 140, sweep: 260,
-      color: '#c04d2a', source: 'speed', opacity: 1, light: { when: 'ct', lamp: 'headlights', effect: 'color', onColor: '#ff6b3d' } },
+      color: '@main', source: 'speed', opacity: 1, light: { when: 'ct', lamp: 'headlights', effect: 'color', onColor: '@warning' } },
+    { id: 'n2', type: 'text', name: 'Gone colour', x: 20, y: 300, w: 60, h: 18, content: 'static', text: 'X', font: 'raj', style: 'Bold',
+      size: 14, align: 'left', color: '@gone', opacity: 1 },
     { id: 'i1', type: 'image', name: 'TC icon', x: 240, y: 230, w: 42, h: 54, rotation: 0, color: '#ff9e14', opacity: 1,
       atlas: 'oitenk/car_tuning/tc_light.inkatlas', part: 'tc_light', light: { when: 'ct', lamp: 'traction', effect: 'show' } },
     { id: 'i2', type: 'image', name: 'Wrong part', x: 300, y: 230, w: 42, h: 54, rotation: 0, color: '#ff9e14', opacity: 1,

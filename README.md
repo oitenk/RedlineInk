@@ -26,6 +26,8 @@ To use it offline, download this repository (**Code → Download ZIP**), unzip i
 
 Any part can act as a light: it lights up on a D.O.P.E. light, a flag your own mod sets, RPM or speed above a value, or fuel below one, and then shows, hides, changes colour, blinks or fades. Lights that are off can stay in place in a dark "unlit" colour, as on a real dashboard, or disappear.
 
+**Colours** (in the design settings): a palette of named colours, such as Main, Accent and Warning, that any colour field can take instead of a colour of its own. In the game, with the [Mod Settings](https://www.nexusmods.com/cyberpunk2077/mods/4885) mod installed, the exported dashboard gets a page of its own in that menu where the player picks each of these colours from a list of named ones, turns all their hues around the colour wheel and sets their brightness; the dashboard redraws with the new colours as soon as V drives. Without Mod Settings the designed colours apply.
+
 **Test drive**, under the canvas, moves everything the way the exported script will: speed, RPM, gear, fuel, units, the D.O.P.E. lights, and **Run a pull** for a run through the gears.
 
 ### Exporting
@@ -37,7 +39,7 @@ Any part can act as a light: it lights up on a D.O.P.E. light, a flag your own m
 - **D.O.P.E.** (Dynamic Overhaul Physics Enhancement, the mod Redline Ink was first made for; its working name was Car
   Tuning): the dashboard sits in a window of its own on the HUD while V drives, fed by the car and by D.O.P.E.'s lights, fuel, odometer and drive mode. It can stay unlit while the car's power is off, and D.O.P.E.'s "Dashboard size" setting scales it. It installs into `r6\scripts\CarTuning\Dashboards\<name>\`. Needs D.O.P.E. (not released yet) and [Codeware](https://github.com/psiberx/cp2077-codeware). If D.O.P.E. is removed, a dashboard left behind does nothing instead of stopping other script mods from loading.
 - **The stock car HUD**: shown inside the game's own speedometer and fed by it. Third-person view only, and clipped to the speedometer's window.
-- **My own code**: for modders. Attach the dashboard to your own widget and feed it with `SetSpeed`, `SetRpm`, `SetGear`, `SetFuel`, `SetDistance`, `SetDriveMode`, `SetFlag` and `SetValue`.
+- **My own code**: for modders. Attach the dashboard to your own widget and feed it with `SetSpeed`, `SetRpm`, `SetGear`, `SetFuel`, `SetDistance`, `SetDriveMode`, `SetFlag` and `SetValue`; `SetPalette` and `SetPaletteColour` change the palette's colours.
 
 All exports need [redscript](https://github.com/jac3km4/redscript).
 

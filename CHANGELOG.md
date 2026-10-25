@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.6
+
+- Colour roles: the design has a palette of named colours (new designs start with Main, Accent, Warning and Dim) and any
+  colour field can take one instead of its own colour. The exported dashboard keeps the palette and, with the Mod Settings
+  mod, gets a page of its own in that menu: each colour as designed or one of sixteen named ones, a hue shift over all of
+  them and a brightness, applied as soon as V drives. Your own code can change the colours with `SetPalette` and
+  `SetPaletteColour`. Designs saved before this have no palette and export as before.
+
 ## 0.1.5
 
 - D.O.P.E.'s whole icon set, 29 icons drawn by fauxboxart.co.official (plus the hill hold light): the icon picker lists

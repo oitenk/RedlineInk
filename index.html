@@ -197,7 +197,15 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .field input[type="number"] { font-variant-numeric: tabular-nums; }
 .field .colorrow { display: flex; gap: 6px; align-items: center; }
 .field .colorrow input[type="color"] { width: 34px; height: 30px; padding: 0; border: 1px solid var(--line); border-radius: 5px; background: none; }
-.field .colorrow input[type="text"] { font-family: var(--font-code); font-size: 12px; }
+.field .colorrow input[type="text"] { font-family: var(--font-code); font-size: 12px; flex: 1 1 auto; width: auto; min-width: 0; }
+.field .colorrow { flex-wrap: wrap; }
+.field .colorrow select { flex: 1 1 100%; }
+.field .colorrow input:disabled { opacity: 0.45; }
+.field .roles { display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px; }
+.field .roles .role { display: flex; flex-direction: row; align-items: center; gap: 6px; }
+.field .roles .role input[type="text"] { flex: 1 1 auto; width: auto; min-width: 0; font-family: inherit; font-size: 13px; }
+.field .roles .role input[type="color"] { flex: 0 0 34px; }
+.field .roles .role .btn { flex: 0 0 auto; }
 .field .rangerow { display: flex; gap: 8px; align-items: center; }
 .field .rangerow input[type="range"] { flex: 1; min-width: 0; accent-color: var(--accent); }
 .field .rangerow output { font-variant-numeric: tabular-nums; font-size: 12px; min-width: 36px; text-align: right; }
@@ -403,28 +411,30 @@ button, input, select, textarea { font: inherit; color: inherit; }
       offColor: '#4d545c', units: 'kmh', speedMax: 260,
       rpmMax: 8000, rpmFromCar: true,
       gearMap: 'stock',
+      palette: [{ id: 'main', name: 'Main', color: '#e8f1f6' }, { id: 'accent', name: 'Accent', color: '#ffb020' },
+        { id: 'warning', name: 'Warning', color: '#ff2a2a' }, { id: 'dim', name: 'Dim', color: '#8fa3af' }],
       elements: [
         part('rect', { name: 'Plate', x: 40, y: 50, w: 560, h: 250, color: '#0b1115', opacity: 0.55 }),
         part('arc', { name: 'Tach', cx: 320, cy: 200, r: 140, start: 150, sweep: 240, segments: 48, thickness: 16, gap: 2,
-          source: 'rpm', redFrom: 0.84 }),
+          colorOn: '@main', colorRedOn: '@warning', source: 'rpm', redFrom: 0.84 }),
         part('arc', { name: 'Tick marks', cx: 320, cy: 200, r: 117, start: 135, sweep: 270, segments: 9, thickness: 3, gap: 56,
           colorOn: '#56656f', colorOff: '#56656f', colorRedOn: '#56656f', colorRedOff: '#56656f', source: 'static' }),
         part('numbers', { name: 'Tach numbers', cx: 320, cy: 200, r: 98, start: 150, sweep: 240, source: 'rpm', step: 1, size: 15,
-          redFrom: 0.84 }),
-        part('text', { name: 'Speed', x: 240, y: 132, w: 160, h: 70, content: 'speed', font: 'digital', style: 'Regular', size: 64 }),
-        part('text', { name: 'Speed units', x: 270, y: 200, w: 100, h: 22, content: 'units', size: 18, color: COLORS.muted }),
-        part('text', { name: 'Gear label', x: 500, y: 214, w: 60, h: 18, text: 'GEAR', size: 13, color: COLORS.muted }),
-        part('text', { name: 'Gear', x: 500, y: 230, w: 60, h: 56, content: 'gear', style: 'Bold', size: 44 }),
-        part('text', { name: 'Fuel label', x: 64, y: 246, w: 60, h: 18, text: 'FUEL', size: 13, align: 'left', color: COLORS.muted }),
-        part('text', { name: 'Fuel percent', x: 164, y: 246, w: 60, h: 18, content: 'fuelPct', size: 13, align: 'right', color: COLORS.muted }),
+          color: '@main', colorRed: '@warning', redFrom: 0.84 }),
+        part('text', { name: 'Speed', x: 240, y: 132, w: 160, h: 70, content: 'speed', font: 'digital', style: 'Regular', size: 64, color: '@main' }),
+        part('text', { name: 'Speed units', x: 270, y: 200, w: 100, h: 22, content: 'units', size: 18, color: '@dim' }),
+        part('text', { name: 'Gear label', x: 500, y: 214, w: 60, h: 18, text: 'GEAR', size: 13, color: '@dim' }),
+        part('text', { name: 'Gear', x: 500, y: 230, w: 60, h: 56, content: 'gear', style: 'Bold', size: 44, color: '@main' }),
+        part('text', { name: 'Fuel label', x: 64, y: 246, w: 60, h: 18, text: 'FUEL', size: 13, align: 'left', color: '@dim' }),
+        part('text', { name: 'Fuel percent', x: 164, y: 246, w: 60, h: 18, content: 'fuelPct', size: 13, align: 'right', color: '@dim' }),
         part('bar', { name: 'Fuel gauge', x: 64, y: 268, w: 160, h: 10, segments: 10, gap: 3, colorOn: COLORS.green,
           colorOff: COLORS.greenDim, source: 'fuel' }),
         part('rect', { name: 'Shift light', x: 280, y: 34, w: 80, h: 8, color: '#2a0d0d',
-          light: { when: 'rpmAbove', threshold: 0.92, effect: 'color', onColor: '#ff2a2a', period: 0.6, flag: '' } }),
-        part('text', { name: 'TC light', x: 70, y: 118, w: 46, h: 30, text: 'TC', style: 'Bold', size: 22, color: COLORS.amber,
+          light: { when: 'rpmAbove', threshold: 0.92, effect: 'color', onColor: '@warning', period: 0.6, flag: '' } }),
+        part('text', { name: 'TC light', x: 70, y: 118, w: 46, h: 30, text: 'TC', style: 'Bold', size: 22, color: '@accent',
           light: { when: 'ct', lamp: 'traction', effect: 'show', period: 0.5, threshold: 0.9, onColor: '#ff2a2a', rate: 4 } }),
         part('text', { name: 'Low fuel light', x: 64, y: 150, w: 70, h: 24, text: 'LOW FUEL', style: 'Semi-Bold', size: 15,
-          color: COLORS.amber, align: 'left',
+          color: '@accent', align: 'left',
           light: { when: 'ct', lamp: 'fuelLow', threshold: 0.15, effect: 'show', period: 0.6, flag: '', onColor: '#ff2a2a', rate: 4 } }),
       ],
     };
@@ -434,7 +444,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
     return { version: 1, name: 'New dashboard', className: 'MyDash', module: '', width: 640, height: 320,
       anchor: 'BottomCenter', offsetX: 0, offsetY: -30, scale: 1.6, hook: 'carTuning', hideStock: true, darkWithoutPower: true,
       powerOff: 'unlit', unlitOpacity: 0.25, offLights: 'unlit', offColor: '#4d545c', units: 'kmh',
-      speedMax: 260, rpmMax: 8000, rpmFromCar: true, gearMap: 'stock', elements: [] };
+      speedMax: 260, rpmMax: 8000, rpmFromCar: true, gearMap: 'stock',
+      palette: [{ id: 'main', name: 'Main', color: '#e8f1f6' }, { id: 'accent', name: 'Accent', color: '#ffb020' },
+      { id: 'warning', name: 'Warning', color: '#ff2a2a' }, { id: 'dim', name: 'Dim', color: '#8fa3af' }], elements: [] };
   }
 
   // ------------------------------------------------------------------ state
@@ -528,6 +540,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
   // Accepts designs from files or storage, filling anything missing with defaults.
   function normalizeDesign(raw) {
     const d = Object.assign(blankDesign(), raw && typeof raw === 'object' ? raw : {});
+    if (raw && typeof raw === 'object' && !Array.isArray(raw.palette)) d.palette = [];
     d.width = clamp(n(d.width, 640), 50, 3840); d.height = clamp(n(d.height, 320), 50, 2160);
     if (!G.ANCHORS[d.anchor]) d.anchor = 'BottomCenter';
     d.elements = Array.isArray(d.elements) ? d.elements.filter((e) => e && MAKE[e.type]).map((e) => {
@@ -624,6 +637,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
   function elementSvg(el, live, defs) {
     const d = state.design;
+    el = G.resolveEl(d, el);
     let fill = G.baseColorOf(el, live);
     let visible = true, flash = false, blink = 0, litFill = null;
     // without the car's power: unlit (dimmed, every light off), or hidden
@@ -641,7 +655,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
     }
     // a light that is off, shown in the unlit colour as a real dashboard's
     const unlitOff = on !== null && G.lightOffLook(d, el) === 'unlit';
-    if (unlitOff && !on) { visible = true; fill = G.unlitColorOf(d); }
+    if (unlitOff && !on) { visible = true; fill = G.resolveColor(d, G.unlitColorOf(d)); }
     // a D.O.P.E. lamp the car does not have at all: the part hidden
     if (el.light && el.light.when === 'ct' && G.lampOf(live, el.light.lamp) < 0) visible = false;
     if (darkNow && !unlitNow) visible = false;
@@ -704,7 +718,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
     };
     const body = draw(fill);
     // blinking, a light that is unlit while off alternates between its colour and the unlit colour
-    const base = unlitOff && on && blink ? draw(G.unlitColorOf(d)) : '';
+    const base = unlitOff && on && blink ? draw(G.resolveColor(d, G.unlitColorOf(d))) : '';
 
     let style = '';
     let cls = 'el';
@@ -1130,9 +1144,17 @@ button, input, select, textarea { font: inherit; color: inherit; }
         + (spec.help ? '<span class="help">' + spec.help + '</span>' : '') + '</label>';
     }
     if (spec.type === 'color') {
-      return '<div class="field' + wide + '"><span>' + spec.label + '</span><div class="colorrow"><input type="color" id="' + id + '" data-key="'
-        + spec.key + '" value="' + esc(v) + '" aria-label="' + spec.label + '"><input type="text" data-key="' + spec.key + '" data-hex value="'
-        + esc(v) + '" spellcheck="false" aria-label="' + spec.label + ' hex"></div></div>';
+      // a colour of the palette ("@id"), shown resolved with its pickers off, or an own colour
+      const roles = G.paletteOf(state.design);
+      const role = G.isRole(v);
+      const hex = G.resolveColor(state.design, v);
+      const off = role ? ' disabled' : '';
+      const sel = roles.length ? '<select data-key="' + spec.key + '" data-roleref aria-label="' + spec.label + ' from the palette">'
+        + '<option value=""' + (role ? '' : ' selected') + '>Own</option>' + roles.map((r) => '<option value="@' + esc(r.id) + '"'
+          + (v === '@' + r.id ? ' selected' : '') + '>' + esc(r.name || r.id) + '</option>').join('') + '</select>' : '';
+      return '<div class="field' + wide + '"><span>' + spec.label + '</span><div class="colorrow">' + sel + '<input type="color" id="' + id
+        + '" data-key="' + spec.key + '" value="' + esc(hex) + '"' + off + ' aria-label="' + spec.label + '"><input type="text" data-key="'
+        + spec.key + '" data-hex value="' + esc(hex) + '" spellcheck="false"' + off + ' aria-label="' + spec.label + ' hex"></div></div>';
     }
     if (spec.type === 'select') {
       return '<label class="field' + wide + '"><span>' + spec.label + '</span><select id="' + id + '" data-key="' + spec.key + '"'
@@ -1326,10 +1348,15 @@ button, input, select, textarea { font: inherit; color: inherit; }
             ['blink', 'Blink it'], ['blinkSteady', 'Blink while on, steady while off'], ['flash', 'Fade in and out']]
             .map(([k, t]) => '<option value="' + k + '"' + ((l.effect || 'show') === k ? ' selected' : '') + '>' + t + '</option>').join('') + '</select></label>');
         if (l.effect === 'color') {
+          const roles = G.paletteOf(state.design);
+          const lv = l.onColor || '#ff2a2a';
           F.push('<div class="field"><span>' + (el.type === 'arc' || el.type === 'bar' ? 'Lit segments turn'
             : el.type === 'numbers' ? 'Numbers turn' : 'Lit colour')
-            + '</span><div class="colorrow"><input type="color" data-light="onColor" value="'
-            + esc(l.onColor || '#ff2a2a') + '" aria-label="Lit colour"></div></div>');
+            + '</span><div class="colorrow">' + (roles.length ? '<select data-light="onColor" data-roleref aria-label="Lit colour from the palette">'
+              + '<option value=""' + (G.isRole(lv) ? '' : ' selected') + '>Own</option>' + roles.map((r) => '<option value="@' + esc(r.id) + '"'
+                + (lv === '@' + r.id ? ' selected' : '') + '>' + esc(r.name || r.id) + '</option>').join('') + '</select>' : '')
+            + '<input type="color" data-light="onColor" value="' + esc(G.resolveColor(state.design, lv)) + '"'
+            + (G.isRole(lv) ? ' disabled' : '') + ' aria-label="Lit colour"></div></div>');
         } else if (l.effect === 'flash') {
           F.push('<label class="field"><span>Fade period (s)</span><input type="number" data-light="period" value="' + esc(n(l.period, 0.6))
             + '" step="0.05" min="0.1"></label>');
@@ -1392,6 +1419,17 @@ button, input, select, textarea { font: inherit; color: inherit; }
           : 'The dashboard stays on screen, dimmed and with its lights off, until the car\'s power comes on, as a real one with the key off.' }, d));
       if (d.powerOff !== 'hidden') F.push(field({ key: 'unlitOpacity', label: 'Unlit brightness', type: 'percent', wide: true, min: 5, max: 80 }, d));
     }
+    F.push(sect('Colours'));
+    const roles = G.paletteOf(d);
+    F.push('<div class="field wide"><span>Palette</span>' + (roles.length ? '<div class="roles">' + roles.map((r, i) =>
+      '<div class="colorrow role"><input type="text" data-role-name="' + i + '" value="' + esc(r.name || '') + '" spellcheck="false" aria-label="Colour name">'
+      + '<input type="color" data-role-color="' + i + '" value="' + esc(/^#[0-9a-f]{6}$/i.test(r.color || '') ? r.color : '#ffffff') + '" aria-label="'
+      + esc(r.name || 'colour') + '"><button class="btn small" data-act="removeRole" data-index="' + i + '" title="Remove this colour">×</button></div>').join('')
+      + '</div>' : '')
+      + (roles.length < G.MAX_ROLES ? '<div class="insp-actions" style="margin:0"><button class="btn small" data-act="addRole">Add a colour</button></div>' : '')
+      + '<span class="help">Named colours that parts share: any colour field can take one. In the game, with the Mod Settings mod installed, '
+      + 'the dashboard gets a page of its own in that menu where the player picks each of these colours, turns all their hues and sets '
+      + 'their brightness. Removing a colour leaves the parts that used it with its colour of their own.</span></div>');
     F.push(sect('Lights'));
     F.push(field({ key: 'offLights', label: 'Lights that are off', type: 'select', wide: true, rebuild: true,
       options: [['unlit', 'Shown unlit, in a dark colour'], ['hidden', 'Hidden']],
@@ -1448,6 +1486,15 @@ button, input, select, textarea { font: inherit; color: inherit; }
     if (!fieldsBox) return;
     const target = fieldsBox.dataset.target === 'el' ? selEl() : state.design;
     if (!target) return;
+    if (inp.hasAttribute('data-role-name') || inp.hasAttribute('data-role-color')) {
+      const byName = inp.hasAttribute('data-role-name');
+      const role = G.paletteOf(state.design)[Number(inp.getAttribute(byName ? 'data-role-name' : 'data-role-color'))];
+      if (!role) return;
+      if (byName) role.name = inp.value;
+      else role.color = inp.value;
+      changed({ inspector: false, drive: false });
+      return;
+    }
     if (inp.hasAttribute('data-icon')) {
       const icon = G.CT_ICONS.find((i) => i.key === inp.value);
       let lit = false;
@@ -1472,6 +1519,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
       target.light = Object.assign({ when: '', flag: '', lamp: '', threshold: 0.9, effect: 'show', onColor: '#ff2a2a', period: 0.6, rate: 4 },
         target.light || {});
       let v = readInput(inp);
+      // a colour of the palette, or back to an own colour starting from the role's
+      if (inp.hasAttribute('data-roleref')) v = v ? v : G.resolveColor(state.design, target.light.onColor);
       if (k === 'when' && v === 'ct' && !G.ctLamp(target.light.lamp)) target.light.lamp = G.CT_LAMPS[0].key;
       if (k === 'when' && v) {
         if (v === 'rpmAbove' && !(target.light.threshold > 0 && target.light.threshold <= 1)) target.light.threshold = 0.9;
@@ -1484,6 +1533,12 @@ button, input, select, textarea { font: inherit; color: inherit; }
       const k = inp.dataset.key;
       if (!k) return;
       let v = readInput(inp);
+      if (inp.hasAttribute('data-roleref')) {
+        // a colour of the palette, or back to an own colour starting from the role's
+        target[k] = v ? v : G.resolveColor(state.design, target[k]);
+        changed({ inspector: true, drive: false });
+        return;
+      }
       if (inp.hasAttribute('data-hex')) {
         if (!/^#[0-9a-f]{6}$/i.test(v)) return;
         const picker = inp.parentElement.querySelector('input[type="color"]');
@@ -1522,6 +1577,30 @@ button, input, select, textarea { font: inherit; color: inherit; }
     const b = e.target.closest('[data-act]'); if (!b) return;
     const act = b.dataset.act;
     if (act === 'del') deleteSelected();
+    else if (act === 'addRole') {
+      const d = state.design;
+      d.palette = G.paletteOf(d);
+      if (d.palette.length < G.MAX_ROLES) {
+        const name = 'Colour ' + (d.palette.length + 1);
+        d.palette.push({ id: G.roleId(name, d.palette.map((r) => r.id)), name: name, color: '#ffffff' });
+        changed({ inspector: true });
+      }
+    }
+    else if (act === 'removeRole') {
+      // the parts that used it keep its colour as their own
+      const d = state.design;
+      const role = G.paletteOf(d)[Number(b.dataset.index)];
+      if (role) {
+        const ref = '@' + role.id, hex = G.resolveColor(d, ref);
+        (d.elements || []).forEach((e) => {
+          G.COLOR_KEYS.forEach((k) => { if (e[k] === ref) e[k] = hex; });
+          if (e.light && e.light.onColor === ref) e.light.onColor = hex;
+        });
+        if (d.offColor === ref) d.offColor = hex;
+        d.palette = G.paletteOf(d).filter((r) => r !== role);
+        changed({ inspector: true });
+      }
+    }
     else if (act === 'dup') duplicateSelected();
     else if (act === 'front') moveSelected(1);
     else if (act === 'back') moveSelected(-1);

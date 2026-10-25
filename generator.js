@@ -331,7 +331,41 @@
     return design.offLights === 'hidden' ? 'hidden' : 'unlit';
   }
   function unlitColorOf(design) {
-    return /^#[0-9a-f]{6}$/i.test(String(design.offColor || '')) ? design.offColor : '#4d545c';
+    const v = String(design.offColor || '');
+    return /^#[0-9a-f]{6}$/i.test(v) || isRole(v) ? v : '#4d545c';
+  }
+
+  // ---- colour roles (2026-10-24): the design's palette, named colours that parts share. Wherever a colour goes, a
+  // part can hold "@<id>" instead of a hex, and draws in that role's colour. In the game the export keeps the palette in
+  // the dashboard (Col(i)) and, with the Mod Settings mod, the player changes each colour, turns all the hues and sets
+  // the brightness on the dashboard's own page of that menu; the dashboard is built again with the new colours. A role
+  // that is gone reads white (the design check says so).
+  const MAX_ROLES = 12;
+  const COLOR_KEYS = ['color', 'colorOn', 'colorOff', 'colorRedOn', 'colorRedOff', 'colorRed', 'modeComfortColor', 'modeSportColor',
+    'modeTrackColor'];
+  const isRole = (v) => /^@[a-z0-9]+$/i.test(String(v || ''));
+  const paletteOf = (design) => (Array.isArray(design && design.palette) ? design.palette : []).slice(0, MAX_ROLES);
+  const roleOf = (design, v) => (isRole(v) ? paletteOf(design).find((r) => '@' + r.id === v) : null) || null;
+  function resolveColor(design, v) {
+    if (!isRole(v)) return v;
+    const r = roleOf(design, v);
+    return r && /^#[0-9a-f]{6}$/i.test(String(r.color || '')) ? r.color : '#ffffff';
+  }
+  // a copy of the part with every role resolved to its colour, for drawing
+  function resolveEl(design, el) {
+    const out = Object.assign({}, el);
+    COLOR_KEYS.forEach((k) => { if (isRole(out[k])) out[k] = resolveColor(design, out[k]); });
+    if (out.light && isRole(out.light.onColor)) {
+      out.light = Object.assign({}, out.light, { onColor: resolveColor(design, out.light.onColor) });
+    }
+    return out;
+  }
+  // a role's id from its name: letters and digits, unique among taken
+  function roleId(name, taken) {
+    let base = String(name || '').toLowerCase().replace(/[^a-z0-9]/g, '') || 'colour';
+    let id = base, n = 2;
+    while (taken.includes(id)) id = base + n++;
+    return id;
   }
 
   // A D.O.P.E. lamp in the preview: 0 off, 1 lit, 2 flashing.
@@ -433,6 +467,20 @@
   function check(design) {
     const problems = [];
     const els = design.elements || [];
+    const roles = paletteOf(design);
+    const roleNames = roles.map((r) => String(r.name || '').trim());
+    roles.forEach((r, i) => {
+      if (!roleNames[i]) problems.push('Colour ' + (i + 1) + ' of the palette has no name; the Mod Settings menu shows it by its name.');
+      else if (roleNames.indexOf(roleNames[i]) !== i) problems.push('Two colours of the palette are called "' + roleNames[i] + '".');
+    });
+    const gone = (v) => isRole(v) && !roleOf(design, v);
+    if (gone(design.offColor)) problems.push('The unlit colour is a colour no longer in the palette, so it is white.');
+    els.forEach((el) => {
+      const label = '"' + (el.name || el.type) + '"';
+      if (COLOR_KEYS.some((k) => gone(el[k])) || (el.light && gone(el.light.onColor))) {
+        problems.push(label + ' uses a colour no longer in the palette, so that colour is white.');
+      }
+    });
     els.forEach((el) => {
       const label = '"' + (el.name || el.type) + '"';
       if (el.type === 'image' && !String(el.atlas || '').trim()) {
@@ -542,10 +590,14 @@
     const liveOf = (el) => live.find((l) => l.el === el);
     // a part's colour before its light: a drive mode readout's follows the mode
     const isModeText = (el) => el.type === 'text' && el.content === 'driveMode';
+    // a colour in the script: a literal, or the dashboard's palette entry for a role (changeable in the game)
+    const roles = paletteOf(design);
+    const roleIndex = (v) => roles.findIndex((r) => '@' + r.id === v);
+    const col = (v) => (isRole(v) ? (roleIndex(v) >= 0 ? 'this.Col(' + roleIndex(v) + ')' : color('#ffffff')) : color(v));
     const baseColor = (el) => isModeText(el)
-      ? '(this.m_driveMode == 2 ? ' + color(modeColorOf(el, 2)) + ' : (this.m_driveMode == 1 ? ' + color(modeColorOf(el, 1))
-        + ' : ' + color(modeColorOf(el, 0)) + '))'
-      : color(el.color);
+      ? '(this.m_driveMode == 2 ? ' + col(modeColorOf(el, 2)) + ' : (this.m_driveMode == 1 ? ' + col(modeColorOf(el, 1))
+        + ' : ' + col(modeColorOf(el, 0)) + '))'
+      : col(el.color);
     // whether a light tints the part (its unlit look, or "Change colour"), so the light sets its colour
     const lightTints = (el) => !!(el.light && el.light.when) && (lightOffLook(design, el) === 'unlit' || el.light.effect === 'color');
 
@@ -764,6 +816,10 @@
     out('  private let m_lampStates: array<Int32>;');
     out('  private let m_sizeFactor: Float;');
     out('  private let m_powered: Bool;');
+    if (roles.length) {
+      out('  private let m_designed: array<HDRColor>;');
+      out('  private let m_palette: array<HDRColor>;');
+    }
     live.forEach((l) => {
       const el = l.el;
       let type = 'wref<inkRectangle>';
@@ -789,6 +845,8 @@
     out('    this.m_gear = 1;');
     out('    this.m_metric = ' + (metricDefault ? 'true' : 'false') + ';');
     out('    this.m_powered = true;');
+    roles.forEach((r) => out('    ArrayPush(this.m_designed, ' + color(resolveColor(design, '@' + r.id)) + ');'));
+    if (roles.length) out('    this.m_palette = this.m_designed;');
     out('  }');
 
     // attach / detach
@@ -837,6 +895,59 @@
     out('      this.Detach();');
     out('    };');
     out('  }');
+    if (roles.length) {
+      out('');
+      out('  // ---- the palette: the design\'s named colours (' + roles.map((r) => r.name || r.id).join(', ') + '), which the parts');
+      out('  // are built with (Col). SetPalette changes them and builds the dashboard again if it is on screen.');
+      out('  public func PaletteSize() -> Int32 {');
+      out('    return ' + roles.length + ';');
+      out('  }');
+      out('');
+      out('  public func Col(i: Int32) -> HDRColor {');
+      out('    this.Defaults();');
+      out('    if i >= 0 && i < ArraySize(this.m_palette) {');
+      out('      return this.m_palette[i];');
+      out('    };');
+      out('    return new HDRColor(1.0, 1.0, 1.0, 1.0);');
+      out('  }');
+      out('');
+      out('  public func DesignedColour(i: Int32) -> HDRColor {');
+      out('    this.Defaults();');
+      out('    if i >= 0 && i < ArraySize(this.m_designed) {');
+      out('      return this.m_designed[i];');
+      out('    };');
+      out('    return new HDRColor(1.0, 1.0, 1.0, 1.0);');
+      out('  }');
+      out('');
+      out('  public func SetPaletteColour(i: Int32, colour: HDRColor) -> Void {');
+      out('    this.Defaults();');
+      out('    if i < 0 || i >= ArraySize(this.m_palette) {');
+      out('      return;');
+      out('    };');
+      out('    this.m_palette[i] = colour;');
+      out('    this.Repaint();');
+      out('  }');
+      out('');
+      out('  public func SetPalette(colours: array<HDRColor>) -> Void {');
+      out('    this.Defaults();');
+      out('    let i: Int32 = 0;');
+      out('    while i < ArraySize(this.m_palette) && i < ArraySize(colours) {');
+      out('      this.m_palette[i] = colours[i];');
+      out('      i += 1;');
+      out('    };');
+      out('    this.Repaint();');
+      out('  }');
+      out('');
+      out('  // Builds the dashboard again where it is, with the palette as it is now.');
+      out('  public func Repaint() -> Void {');
+      out('    if !IsDefined(this.m_root) || !IsDefined(this.m_parent) {');
+      out('      return;');
+      out('    };');
+      out('    let parent: ref<inkCompoundWidget> = this.m_parent;');
+      out('    this.Detach();');
+      out('    this.Attach(parent);');
+      out('  }');
+    }
 
     // setters
     out('');
@@ -1321,40 +1432,40 @@
       if (el.type === 'rect' || (el.type === 'image' && !String(el.atlas || '').trim())) {
         const b = boxRect(el);
         const call = 'this.Rect(root, ' + f(b.cx) + ', ' + f(b.cy) + ', ' + f(b.w) + ', ' + f(b.h) + ', '
-          + f(b.deg) + ', ' + color(el.color) + ', ' + op + ')';
+          + f(b.deg) + ', ' + col(el.color) + ', ' + op + ')';
         out('    ' + (l ? 'this.' + l.field + ' = ' : '') + call + ';');
       } else if (el.type === 'image') {
         const b = boxRect(el);
         const v = l ? 'this.' + l.field : 'image' + el.id;
         if (!l) out('    let ' + v + ': ref<inkImage> = this.Image(root, ' + f(b.cx) + ', ' + f(b.cy) + ', '
-          + f(b.w) + ', ' + f(b.h) + ', ' + f(b.deg) + ', ' + color(el.color) + ', ' + op + ');');
+          + f(b.w) + ', ' + f(b.h) + ', ' + f(b.deg) + ', ' + col(el.color) + ', ' + op + ');');
         else out('    ' + v + ' = this.Image(root, ' + f(b.cx) + ', ' + f(b.cy) + ', ' + f(b.w) + ', '
-          + f(b.h) + ', ' + f(b.deg) + ', ' + color(el.color) + ', ' + op + ');');
+          + f(b.h) + ', ' + f(b.deg) + ', ' + col(el.color) + ', ' + op + ');');
         out('    ' + v + '.SetAtlasResource(' + resref(el.atlas) + ');');
         if (String(el.part || '').trim()) out('    ' + v + '.SetTexturePart(' + cname(String(el.part).trim()) + ');');
       } else if (el.type === 'line') {
         const b = lineRect(el);
         const call = 'this.Rect(root, ' + f(b.cx) + ', ' + f(b.cy) + ', ' + f(b.w) + ', ' + f(b.h) + ', '
-          + f(b.deg) + ', ' + color(el.color) + ', ' + op + ')';
+          + f(b.deg) + ', ' + col(el.color) + ', ' + op + ')';
         out('    ' + (l ? 'this.' + l.field + ' = ' : '') + call + ';');
       } else if (el.type === 'arc' || el.type === 'bar') {
         out('    segments = new ' + C + 'Segments();');
-        out('    segments.m_on = ' + color(el.colorOn) + ';');
-        out('    segments.m_off = ' + color(el.colorOff) + ';');
-        out('    segments.m_redOn = ' + color(el.colorRedOn) + ';');
-        out('    segments.m_redOff = ' + color(el.colorRedOff) + ';');
+        out('    segments.m_on = ' + col(el.colorOn) + ';');
+        out('    segments.m_off = ' + col(el.colorOff) + ';');
+        out('    segments.m_redOn = ' + col(el.colorRedOn) + ';');
+        out('    segments.m_redOff = ' + col(el.colorRedOff) + ';');
         out('    segments.m_redFrom = ' + int(redFromIndex(el)) + ';');
         out('    group = this.Group(root);');
         out('    segments.m_group = group;');
         segmentsFor(el).forEach((s) => {
           out('    segments.Add(this.Rect(group, ' + f(s.cx) + ', ' + f(s.cy) + ', ' + f(s.w) + ', ' + f(s.h)
-            + ', ' + f(s.deg) + ', ' + color(el.colorOff) + ', ' + op + '));');
+            + ', ' + f(s.deg) + ', ' + col(el.colorOff) + ', ' + op + '));');
         });
         if (l) out('    this.' + l.field + ' = segments;');
         if (!el.source || el.source === 'static') out('    segments.SetFraction(' + f(clamp01(num(el.staticFraction, 1))) + ');');
       } else if (el.type === 'needle') {
         out('    this.' + l.field + ' = this.Needle(root, ' + f(el.cx) + ', ' + f(el.cy) + ', ' + f(el.length)
-          + ', ' + f(el.thickness) + ', ' + color(el.color) + ', ' + op + ');');
+          + ', ' + f(el.thickness) + ', ' + col(el.color) + ', ' + op + ');');
         if (!el.source || el.source === 'static') {
           out('    this.' + l.field + '.SetRotation(' + f(num(el.start, 135) + num(el.sweep, 270)
             * clamp01(num(el.staticFraction, 0))) + ');');
@@ -1371,7 +1482,7 @@
         }
         const call = 'this.Text(root, ' + f(el.x) + ', ' + f(el.y) + ', ' + f(el.w) + ', ' + f(el.h) + ', '
           + value + ', ' + str(FONTS[font].path) + ', ' + cname(style) + ', ' + int(el.size) + ', '
-          + align + ', ' + color(el.color) + ', ' + op + ')';
+          + align + ', ' + col(el.color) + ', ' + op + ')';
         out('    ' + (l ? 'this.' + l.field + ' = ' : '') + call + ';');
       } else if (el.type === 'numbers') {
         const font = FONTS[el.font] ? el.font : 'raj';
@@ -1390,8 +1501,8 @@
         out('    numbers.m_size = ' + int(Math.max(4, num(el.size, 16))) + ';');
         out('    numbers.m_w = ' + f(box.w) + ';');
         out('    numbers.m_h = ' + f(box.h) + ';');
-        out('    numbers.m_color = ' + color(el.color) + ';');
-        out('    numbers.m_redColor = ' + color(el.colorRed) + ';');
+        out('    numbers.m_color = ' + col(el.color) + ';');
+        out('    numbers.m_redColor = ' + col(el.colorRed) + ';');
         out('    numbers.m_redFrom = ' + f(dialRedFrom(el)) + ';');
         out('    numbers.m_opacity = ' + op + ';');
         out('    this.' + l.field + ' = numbers;');
@@ -1537,7 +1648,7 @@
       }
       if (lightOffLook(design, el) === 'unlit') {
         // shown in the unlit colour while off, as a real dashboard's lamps
-        const lit = baseColor(el), dim = color(unlitColorOf(design));
+        const lit = baseColor(el), dim = col(unlitColorOf(design));
         if (lt.effect === 'flash') {
           out(p + 'this.' + l.flashField + ' = this.Flash(' + w + ', on, ' + f(num(lt.period, 0.6)) + ', '
             + f(clamp01(num(el.opacity, 1))) + ', this.' + l.flashField + ');');
@@ -1550,9 +1661,9 @@
         }
       } else if (lt.effect === 'hide') out(p + w + '.SetVisible(!on);');
       else if (lt.effect === 'color' && seg) {
-        out(p + 'this.' + l.field + '.SetLight(on, ' + color(lt.onColor) + ');');
+        out(p + 'this.' + l.field + '.SetLight(on, ' + col(lt.onColor) + ');');
       } else if (lt.effect === 'color') {
-        out(p + w + '.SetTintColor(on ? ' + color(lt.onColor) + ' : ' + baseColor(el) + ');');
+        out(p + w + '.SetTintColor(on ? ' + col(lt.onColor) + ' : ' + baseColor(el) + ');');
       } else if (lt.effect === 'flash') {
         out(p + 'this.' + l.flashField + ' = this.Flash(' + w + ', on, ' + f(num(lt.period, 0.6)) + ', '
           + f(clamp01(num(el.opacity, 1))) + ', this.' + l.flashField + ');');
@@ -1571,6 +1682,10 @@
     out('// Holds the dashboard so any script can reach it.');
     out('public class ' + C + 'System extends ScriptableSystem {');
     out('  private let m_dash: ref<' + C + '>;');
+    if (roles.length) {
+      out('  private let m_colours: ref<' + C + 'Colours>;');
+      out('  private let m_applied: String;');
+    }
     out('');
     out('  public func Dash() -> ref<' + C + '> {');
     out('    if !IsDefined(this.m_dash) {');
@@ -1582,7 +1697,172 @@
     out('  public static func Get(game: GameInstance) -> ref<' + C + 'System> {');
     out('    return GameInstance.GetScriptableSystemsContainer(game).Get(' + cname(sysName) + ') as ' + C + 'System;');
     out('  }');
+    if (roles.length) {
+      out('');
+      out('  private func OnAttach() -> Void {');
+      out('    this.m_colours = new ' + C + 'Colours();');
+      out('    ' + C + 'RegisterColours(this.m_colours);');
+      out('  }');
+      out('');
+      out('  private func OnDetach() -> Void {');
+      out('    ' + C + 'UnregisterColours(this.m_colours);');
+      out('  }');
+      out('');
+      out('  public func Colours() -> ref<' + C + 'Colours> {');
+      out('    return this.m_colours;');
+      out('  }');
+      out('');
+      out('  // Puts the Colours settings onto the dashboard when they have changed since the last look (called on every');
+      out('  // update, so a change in the menu shows as soon as V drives).');
+      out('  public func ApplyColours() -> Void {');
+      out('    if !IsDefined(this.m_colours) {');
+      out('      return;');
+      out('    };');
+      out('    let key: String = IntToString(this.m_colours.hueShift) + "/" + IntToString(this.m_colours.brightness);');
+      roles.forEach((r, i) => out('    key = key + "/" + IntToString(EnumInt(this.m_colours.colour' + i + '));'));
+      out('    if Equals(key, this.m_applied) {');
+      out('      return;');
+      out('    };');
+      out('    this.m_applied = key;');
+      out('    let dash: ref<' + C + '> = this.Dash();');
+      out('    let hue: Float = Cast<Float>(this.m_colours.hueShift);');
+      out('    let bright: Float = Cast<Float>(this.m_colours.brightness) / 100.0;');
+      out('    let colours: array<HDRColor>;');
+      roles.forEach((r, i) => {
+        out('    ArrayPush(colours, ' + C + 'Adjust(Equals(this.m_colours.colour' + i + ', ' + C + 'Colour.AsDesigned)');
+        out('      ? dash.DesignedColour(' + i + ') : ' + C + 'NamedColour(this.m_colours.colour' + i + '), hue, bright));');
+      });
+      out('    dash.SetPalette(colours);');
+      out('  }');
+    }
     out('}');
+
+    // ---- colours in the Mod Settings menu
+    if (roles.length) {
+      const NAMED = [['White', '1.0, 1.0, 1.0'], ['Red', '1.0, 0.15, 0.15'], ['Orange', '1.0, 0.42, 0.1'], ['Amber', '1.0, 0.62, 0.08'],
+        ['Yellow', '1.0, 0.9, 0.2'], ['Lime', '0.6, 1.0, 0.2'], ['Green', '0.27, 1.0, 0.43'], ['Teal', '0.1, 0.85, 0.7'],
+        ['Cyan', '0.2, 0.95, 1.0'], ['SkyBlue', '0.37, 0.62, 1.0'], ['Blue', '0.2, 0.35, 1.0'], ['Purple', '0.6, 0.3, 1.0'],
+        ['Magenta', '1.0, 0.25, 0.9'], ['Pink', '1.0, 0.55, 0.75'], ['Grey', '0.56, 0.62, 0.67'], ['DarkGrey', '0.3, 0.33, 0.36']];
+      const menuName = String(design.name || C).trim() || C;
+      out('');
+      out('// ---- Colours (Mod Settings): each of the design\'s colours as the player wants it, and a hue shift and brightness');
+      out('// over all of them, on the dashboard\'s own page of the Mod Settings menu. Without the Mod Settings mod the');
+      out('// design\'s own colours apply.');
+      out('');
+      out('enum ' + C + 'Colour {');
+      out('  AsDesigned = 0,');
+      NAMED.forEach(([name], i) => out('  ' + name + ' = ' + (i + 1) + (i + 1 < NAMED.length ? ',' : '')));
+      out('}');
+      out('');
+      out('public class ' + C + 'Colours {');
+      roles.forEach((r, i) => {
+        const name = String(r.name || r.id).trim() || ('Colour ' + (i + 1));
+        out('  @runtimeProperty("ModSettings.mod", ' + str(menuName) + ')');
+        out('  @runtimeProperty("ModSettings.category", "Colours")');
+        out('  @runtimeProperty("ModSettings.displayName", ' + str(name) + ')');
+        out('  @runtimeProperty("ModSettings.description", ' + str('The dashboard\'s ' + name.toLowerCase() + ' colour: as designed ('
+          + resolveColor(design, '@' + r.id) + ') or a named colour. The hue shift and brightness below apply on top.') + ')');
+        out('  public let colour' + i + ': ' + C + 'Colour = ' + C + 'Colour.AsDesigned;');
+        out('');
+      });
+      out('  @runtimeProperty("ModSettings.mod", ' + str(menuName) + ')');
+      out('  @runtimeProperty("ModSettings.category", "Colours")');
+      out('  @runtimeProperty("ModSettings.displayName", "Hue shift")');
+      out('  @runtimeProperty("ModSettings.description", "Turns every colour around the colour wheel by this many degrees. 0 keeps the hues as designed; whites and greys do not change.")');
+      out('  @runtimeProperty("ModSettings.step", "5")');
+      out('  @runtimeProperty("ModSettings.min", "-180")');
+      out('  @runtimeProperty("ModSettings.max", "180")');
+      out('  public let hueShift: Int32 = 0;');
+      out('');
+      out('  @runtimeProperty("ModSettings.mod", ' + str(menuName) + ')');
+      out('  @runtimeProperty("ModSettings.category", "Colours")');
+      out('  @runtimeProperty("ModSettings.displayName", "Brightness")');
+      out('  @runtimeProperty("ModSettings.description", "Every colour\'s brightness, in percent of what it is as designed or named.")');
+      out('  @runtimeProperty("ModSettings.step", "5")');
+      out('  @runtimeProperty("ModSettings.min", "25")');
+      out('  @runtimeProperty("ModSettings.max", "150")');
+      out('  public let brightness: Int32 = 100;');
+      out('}');
+      out('');
+      out('@if(ModuleExists("ModSettingsModule"))');
+      out('func ' + C + 'RegisterColours(colours: ref<' + C + 'Colours>) -> Void {');
+      out('  ModSettings.RegisterListenerToClass(colours);');
+      out('}');
+      out('');
+      out('@if(!ModuleExists("ModSettingsModule"))');
+      out('func ' + C + 'RegisterColours(colours: ref<' + C + 'Colours>) -> Void {}');
+      out('');
+      out('@if(ModuleExists("ModSettingsModule"))');
+      out('func ' + C + 'UnregisterColours(colours: ref<' + C + 'Colours>) -> Void {');
+      out('  ModSettings.UnregisterListenerToClass(colours);');
+      out('}');
+      out('');
+      out('@if(!ModuleExists("ModSettingsModule"))');
+      out('func ' + C + 'UnregisterColours(colours: ref<' + C + 'Colours>) -> Void {}');
+      out('');
+      out('func ' + C + 'NamedColour(colour: ' + C + 'Colour) -> HDRColor {');
+      NAMED.forEach(([name, rgbText]) => {
+        out('  if Equals(colour, ' + C + 'Colour.' + name + ') {');
+        out('    return new HDRColor(' + rgbText + ', 1.0);');
+        out('  };');
+      });
+      out('  return new HDRColor(1.0, 1.0, 1.0, 1.0);');
+      out('}');
+      out('');
+      out('// The colour with its hue turned by hueShift degrees and its brightness scaled (through hue, saturation, value).');
+      out('func ' + C + 'Adjust(c: HDRColor, hueShift: Float, brightness: Float) -> HDRColor {');
+      out('  let r: Float = c.Red;');
+      out('  let g: Float = c.Green;');
+      out('  let b: Float = c.Blue;');
+      out('  let mx: Float = MaxF(r, MaxF(g, b));');
+      out('  let mn: Float = MinF(r, MinF(g, b));');
+      out('  let d: Float = mx - mn;');
+      out('  let h: Float = 0.0;');
+      out('  if d > 0.0001 {');
+      out('    if mx == r {');
+      out('      h = (g - b) / d;');
+      out('    } else {');
+      out('      if mx == g {');
+      out('        h = (b - r) / d + 2.0;');
+      out('      } else {');
+      out('        h = (r - g) / d + 4.0;');
+      out('      };');
+      out('    };');
+      out('    h = h * 60.0;');
+      out('  };');
+      out('  h = h + hueShift;');
+      out('  while h < 0.0 {');
+      out('    h += 360.0;');
+      out('  };');
+      out('  while h >= 360.0 {');
+      out('    h -= 360.0;');
+      out('  };');
+      out('  let s: Float = mx > 0.0001 ? d / mx : 0.0;');
+      out('  let v: Float = ClampF(mx * brightness, 0.0, 1.0);');
+      out('  let hh: Float = h / 60.0;');
+      out('  let sector: Int32 = Cast<Int32>(hh) % 6;');
+      out('  let fr: Float = hh - Cast<Float>(sector);');
+      out('  let p: Float = v * (1.0 - s);');
+      out('  let q: Float = v * (1.0 - s * fr);');
+      out('  let t: Float = v * (1.0 - s * (1.0 - fr));');
+      out('  if sector == 0 {');
+      out('    return new HDRColor(v, t, p, c.Alpha);');
+      out('  };');
+      out('  if sector == 1 {');
+      out('    return new HDRColor(q, v, p, c.Alpha);');
+      out('  };');
+      out('  if sector == 2 {');
+      out('    return new HDRColor(p, v, t, c.Alpha);');
+      out('  };');
+      out('  if sector == 3 {');
+      out('    return new HDRColor(p, q, v, c.Alpha);');
+      out('  };');
+      out('  if sector == 4 {');
+      out('    return new HDRColor(t, p, v, c.Alpha);');
+      out('  };');
+      out('  return new HDRColor(v, p, q, c.Alpha);');
+      out('}');
+    }
 
     // ---- hook-up
     if (ct) {
@@ -1623,6 +1903,7 @@
       }
       lampsUsed.forEach((k) => out('  dash.SetLamp(' + cname(k) + ', CarTuningDash.Lamp(game, ' + cname(k) + '));'));
       if (dark) out('  dash.SetPowered(CarTuningDash.Lamp(game, n"power") >= 1);');
+      if (roles.length) out('  system.ApplyColours();');
       out('  dash.Tick();');
       out('}');
       ['DriveEvents', 'DriverCombatEvents'].forEach((cls) => {
@@ -1675,6 +1956,7 @@
       out('    return null;');
       out('  };');
       out('  let dash: ref<' + C + '> = system.Dash();');
+      if (roles.length) out('  system.ApplyColours();');
       out('  dash.Attach(root);');
       if (design.hideStock !== false) out('  dash.HideOthers();');
       out('  dash.UseVehicle(vehicle);');
@@ -1773,7 +2055,7 @@
     arcSegments, barSegments, lineRect, boxRect, segmentsFor,
     DIAL_MAX, dialNumbers, dialValues, dialPlace, dialTurn, dialBox, dialLabels, dialStep, dialCount,
     displaySpeed, rpmMax, sourceFraction, inRange, hasRange, textValue, gearText, lightOn, litCount, redFromIndex,
-    lightOffLook, unlitColorOf, baseColorOf,
+    lightOffLook, unlitColorOf, baseColorOf, isRole, paletteOf, roleOf, resolveColor, resolveEl, roleId, COLOR_KEYS, MAX_ROLES,
     generate, check, fileNameFor, folderFor, installFolderFor, pascal, ident, rgb,
   };
 });
