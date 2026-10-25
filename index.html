@@ -273,6 +273,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
       <button class="btn" id="exampleBtn">Example</button>
       <button class="btn" id="designsBtn">My designs</button>
       <button class="btn" id="saveBtn">Save</button>
+      <button class="btn primary" id="saveGameBtn" hidden title="Writes the dashboard as a file into D.O.P.E.'s dashboards folder">Save to D.O.P.E.</button>
       <button class="btn primary" id="exportBtn">Export redscript</button>
     </div>
   </header>
@@ -1409,7 +1410,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
     F.push(field({ key: 'hook', label: 'Feed it from', type: 'select', wide: true, rebuild: true,
       options: [['carTuning', 'D.O.P.E. (its own window on the HUD)'], ['stock', 'The stock car HUD (automatic)'], ['none', 'My own code only']],
       help: d.hook === 'none' ? 'Call Attach(parent), SetSpeed, SetRpm and SetGear yourself.'
-        : d.hook === 'carTuning' ? 'Shows in a window of its own while V drives, fed by the car and by D.O.P.E.\'s lights and fuel. Needs D.O.P.E. and Codeware.'
+        : d.hook === 'carTuning' ? 'Shows in a window of its own while V drives, fed by the car and by D.O.P.E.\'s lights and fuel. Save to D.O.P.E. (at the top) writes it as a file into D.O.P.E.\'s dashboards folder, which the mod reads itself: nothing to install, and it shows on the next drive. Needs D.O.P.E. and Codeware.'
           : 'Shows inside the stock car HUD (third-person view only, and clipped to its window) and receives its speed, RPM and gear.' }, d));
     if (d.hook !== 'none') F.push(field({ key: 'hideStock', label: 'Hide the stock gauges', type: 'check', wide: true }, d));
     if (d.hook === 'carTuning') F.push(field({ key: 'darkWithoutPower', label: 'Dark with the power off', type: 'check', wide: true,
@@ -1855,6 +1856,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
     $('#codePane').innerHTML = '<div class="code-actions"><button class="btn primary small" id="copyCode">Copy</button>'
       + '<button class="btn small" id="zipCode">Download .zip</button>'
       + '<span class="where">' + esc(zipPath()) + ' · ' + code.split('\n').length + ' lines</span></div>'
+      + (state.design.hook === 'carTuning' ? '<div class="checks"><strong>With D.O.P.E. you need no script.</strong> Save to D.O.P.E. writes the dashboard as a file the mod reads itself, '
+        + 'and D.O.P.E. shows the one most the car\'s own. This script is the older way, a mod of its own; it still works, but a scripted dashboard and the same design as a file would both show.</div>' : '')
       + (problems.length ? '<div class="checks"><strong>Before you export</strong><ul>' + problems.map((p) => '<li>' + esc(p) + '</li>').join('') + '</ul></div>' : '')
       + '<pre class="code" id="codeView" tabindex="0">' + highlight(code) + '</pre>';
   }
@@ -1911,6 +1914,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
   // -------------------------------------------------------------- top bar
   function renderTop() {
     const nm = $('#designName');
+    $('#saveGameBtn').hidden = state.design.hook !== 'carTuning';
     if (document.activeElement !== nm) nm.value = state.design.name || '';
     $('#undoBtn').disabled = !history.past.length && designJson() === history.last;
     $('#redoBtn').disabled = !history.future.length;
@@ -2062,6 +2066,57 @@ button, input, select, textarea { font: inherit; color: inherit; }
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 10000);
   }
+
+  // ---- Save to D.O.P.E. (2026-10-24): the dashboard file written straight into the game's dashboards folder. Chrome
+  // and Edge let a page write into a folder the user picks once (the handle is kept in IndexedDB; the browser asks
+  // again for permission as it sees fit); elsewhere, and where a page may not ask, the file downloads to be put there.
+  const DASH_FOLDER_HINT = 'Cyberpunk 2077\\red4ext\\plugins\\CarTuning\\dashboards';
+  function idb(mode, fn) {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open('redline-ink', 1);
+      req.onupgradeneeded = () => req.result.createObjectStore('kv');
+      req.onerror = () => reject(req.error);
+      req.onsuccess = () => {
+        const tx = req.result.transaction('kv', mode);
+        const r = fn(tx.objectStore('kv'));
+        tx.oncomplete = () => resolve(r && r.result);
+        tx.onerror = () => reject(tx.error);
+      };
+    });
+  }
+  async function gameFolder(ask) {
+    let handle = null;
+    if (!ask) { try { handle = await idb('readonly', (s) => s.get('dopeFolder')); } catch (e) { handle = null; } }
+    if (!handle) {
+      handle = await window.showDirectoryPicker({ id: 'dope-dashboards', mode: 'readwrite' });
+      try { await idb('readwrite', (s) => s.put(handle, 'dopeFolder')); } catch (e) { /* kept for this visit only */ }
+    }
+    if ((await handle.queryPermission({ mode: 'readwrite' })) !== 'granted'
+      && (await handle.requestPermission({ mode: 'readwrite' })) !== 'granted') throw new Error('no permission');
+    return handle;
+  }
+  async function saveToGame(ask) {
+    const name = G.dashboardFileName(state.design), text = G.dashboardFile(state.design);
+    const download = async () => {
+      await saveFile(name, text);
+      toast('Downloaded ' + name + '. Put it in ' + DASH_FOLDER_HINT + '; this browser cannot write there itself.');
+    };
+    if (!window.showDirectoryPicker) { await download(); return; }
+    try {
+      const folder = await gameFolder(ask);
+      const file = await folder.getFileHandle(name, { create: true });
+      const w = await file.createWritable();
+      await w.write(text);
+      await w.close();
+      toast('Saved ' + name + ' into ' + folder.name + '. D.O.P.E. shows it on the next drive.');
+    } catch (e) {
+      if (e && e.name === 'AbortError') return;
+      if (e && (e.name === 'SecurityError' || e.name === 'NotAllowedError')) { await download(); return; }
+      if (!ask) { await saveToGame(true); return; }
+      toast('Could not save into that folder. Pick D.O.P.E.\'s dashboards folder (' + DASH_FOLDER_HINT + ') or use Export design file.');
+    }
+  }
+  $('#saveGameBtn').addEventListener('click', () => { saveToGame(false); });
 
   $('#exportJsonBtn').addEventListener('click', async () => {
     try {

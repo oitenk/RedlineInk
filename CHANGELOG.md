@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.8
+
+- Save to D.O.P.E.: a D.O.P.E.-fed dashboard is saved as a file straight into the game's dashboards folder
+  (`red4ext\plugins\CarTuning\dashboards`), which D.O.P.E. reads itself, so a dashboard is no longer a mod of its own
+  and needs no install: it shows on the next drive, and a change saved while the game runs shows too. Chrome and Edge
+  write into the folder once you have picked it; other browsers download the file to put there. The redscript export
+  stays for the stock HUD, for your own code, and as the older way.
+
 ## 0.1.7
 
 - Cars: a dashboard can be for every car or only for the cars its rule names, by class (sports, standard, utility,

@@ -2253,6 +2253,19 @@
 
   // Where the export goes under r6/scripts: a dashboard fed from D.O.P.E. goes into D.O.P.E.'s Dashboards folder
   // (it still installs as a mod of its own); any other in a folder of its own.
+  // ---- the dashboard file (2026-10-24): what "Save to D.O.P.E." writes into D.O.P.E.'s dashboards folder
+  // (red4ext/plugins/CarTuning/dashboards), where the mod's own runtime reads it: the design as it is, without the
+  // preview pictures, marked with a format and a version. Named after the design.
+  function dashboardFile(design) {
+    const d = JSON.parse(JSON.stringify(design));
+    (d.elements || []).forEach((e) => { delete e.preview; });
+    return JSON.stringify(Object.assign({ format: 'dope-dashboard', formatVersion: 1 }, d), null, 2);
+  }
+  function dashboardFileName(design) {
+    const name = String(design.name || '').replace(/[<>:"/\\|?*\x00-\x1f]/g, '').replace(/\s+/g, ' ').trim();
+    return (name || pascal(design.className, 'Dash')) + '.json';
+  }
+
   function installFolderFor(design) {
     return (design.hook === 'carTuning' ? 'CarTuning/Dashboards/' : '') + folderFor(design);
   }
@@ -2264,6 +2277,6 @@
     displaySpeed, rpmMax, sourceFraction, inRange, hasRange, textValue, gearText, lightOn, litCount, redFromIndex,
     lightOffLook, unlitColorOf, baseColorOf, isRole, paletteOf, roleOf, resolveColor, resolveEl, roleId, COLOR_KEYS, MAX_ROLES,
     CAR_CLASSES, VANILLA_CARS, carList, carMakers, carsOnly,
-    generate, check, fileNameFor, folderFor, installFolderFor, pascal, ident, rgb,
+    generate, check, fileNameFor, folderFor, installFolderFor, dashboardFile, dashboardFileName, pascal, ident, rgb,
   };
 });
