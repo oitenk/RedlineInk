@@ -52,6 +52,8 @@ Each export is a mod of its own. Give each dashboard its own class name: two exp
 
 ## Credits
 
+- The dashboard icons (the pictures in `icons/`, and the icon sheets in D.O.P.E.'s archive they stand for) were drawn by
+  [fauxboxart.co.official](https://www.instagram.com/fauxboxart.co.official/) on Instagram; the hill hold light is the author's own.
 - [JSZip](https://stuk.github.io/jszip/) (MIT) by Stuart Knightley and contributors makes the .zip; the page loads it from cdnjs.
 - The editor's fonts come from Google Fonts: Rajdhani, Barlow, Barlow Condensed, JetBrains Mono and Share Tech Mono (SIL Open Font License). Exported dashboards use the game's own fonts.
 

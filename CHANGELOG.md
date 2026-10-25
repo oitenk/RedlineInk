@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.5
+
+- D.O.P.E.'s whole icon set, 29 icons drawn by fauxboxart.co.official (plus the hill hold light): the icon picker lists
+  them all, and each shows its real picture in the editor and the test drive, tinted as the game draws it, so a
+  preview picture no longer needs uploading for them. Picking an icon that stands for one of D.O.P.E.'s lights makes it
+  that light on a D.O.P.E.-fed dashboard (unless the element already acts as a light).
+
 ## 0.1.4
 
 - The drive mode readout can show each mode in its own colour (the preset: Comfort green, Sport amber, Track red). A

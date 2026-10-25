@@ -181,7 +181,16 @@ const misfed = { name: 'Misfed', className: 'RedlineMisfedDash', module: 'Redlin
 lampEls[3].light.offLook = 'hidden';
 // The same, hidden without power instead of unlit.
 const carTuningHidden = Object.assign({}, carTuning, { name: 'D.O.P.E. hidden dash', className: 'RedlineHiddenDash', powerOff: 'hidden' });
-const cases = { full, plain, empty, carTuning, carTuningHidden, misfed };
+// every D.O.P.E. icon as a picture, lit by the lamp it stands for where it has one
+const icons = {
+  name: 'Icons', className: 'RedlineIconsDash', module: 'RedlineIcons', width: 640, height: 320, anchor: 'BottomCenter',
+  offsetX: 0, offsetY: -30, scale: 1, hook: 'carTuning', hideStock: true, darkWithoutPower: true, units: 'kmh',
+  speedMax: 260, rpmMax: 8000, rpmFromCar: true, gearMap: 'stock',
+  elements: gen.CT_ICONS.map((icon, i) => Object.assign({ id: 'p' + i, type: 'image', name: icon.label, x: 10 + (i % 8) * 78,
+    y: 10 + Math.floor(i / 8) * 78, w: 64, h: 64, rotation: 0, color: icon.color, opacity: 1, atlas: icon.atlas, part: icon.part },
+    icon.lamp ? { light: { when: 'ct', lamp: icon.lamp, effect: 'show' } } : {})),
+};
+const cases = { full, plain, empty, carTuning, carTuningHidden, misfed, icons };
 for (const [key, design] of Object.entries(cases)) {
   const dir = path.join(outRoot, key, 'r6', 'scripts', gen.installFolderFor(design));
   fs.mkdirSync(dir, { recursive: true });

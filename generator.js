@@ -56,14 +56,40 @@
   ];
   const ctLamp = (key) => CT_LAMPS.find((l) => l.key === key) || null;
 
-  // D.O.P.E.'s own icons, in its CarTuning.archive, with the colours they were drawn for.
+  // D.O.P.E.'s own icons, in its CarTuning.archive (one sheet per icon, oitenk/car_tuning/<name>.inkatlas, the part
+  // named as the sheet): since 2026-10-24 the set drawn by fauxboxart.co.official, plus the hill hold light. Each has
+  // the colour it is drawn for, its preview picture (icons/<name>.png, a white glyph the editor tints as the game
+  // does) and, where D.O.P.E. reports one, the lamp it stands for. Keep in step with the mod's art/icons.py.
   const CT_ICONS = [
-    { key: 'traction', label: 'Traction control', atlas: 'oitenk\\car_tuning\\tc_light.inkatlas', part: 'tc_light', color: '#ff9e14' },
-    { key: 'headlightLow', label: 'Low beam', atlas: 'oitenk\\car_tuning\\headlight_low.inkatlas', part: 'headlight_low', color: '#45ff6e' },
-    { key: 'headlightHigh', label: 'High beam', atlas: 'oitenk\\car_tuning\\headlight_high.inkatlas', part: 'headlight_high', color: '#5e9eff' },
-    // the hill hold icon: lit green, and the unlit dark grey (#4d545c) while off
-    { key: 'hold', label: 'Hill hold', atlas: 'oitenk\\car_tuning\\hold_light.inkatlas', part: 'hold_light', color: '#45ff6e' },
-    { key: 'gasPump', label: 'Gas pump', atlas: 'oitenk\\car_tuning\\gas_pump.inkatlas', part: 'gas_pump', color: '#ffffff' },
+    { key: 'traction', label: 'Traction control', atlas: 'oitenk\\car_tuning\\tc_light.inkatlas', part: 'tc_light', color: '#ff9e14', preview: 'icons/tc_light.png', lamp: 'traction' },
+    { key: 'hold', label: 'Hill hold', atlas: 'oitenk\\car_tuning\\hold_light.inkatlas', part: 'hold_light', color: '#45ff6e', preview: 'icons/hold_light.png', lamp: 'hillHold' },
+    { key: 'headlightLow', label: 'Low beam', atlas: 'oitenk\\car_tuning\\headlight_low.inkatlas', part: 'headlight_low', color: '#45ff6e', preview: 'icons/headlight_low.png', lamp: 'headlights' },
+    { key: 'headlightHigh', label: 'High beam', atlas: 'oitenk\\car_tuning\\headlight_high.inkatlas', part: 'headlight_high', color: '#5e9eff', preview: 'icons/headlight_high.png', lamp: 'highBeam' },
+    { key: 'gasPump', label: 'Low fuel', atlas: 'oitenk\\car_tuning\\gas_pump.inkatlas', part: 'gas_pump', color: '#ff9e14', preview: 'icons/gas_pump.png', lamp: 'fuelLow' },
+    { key: 'absWarning', label: 'ABS warning', atlas: 'oitenk\\car_tuning\\abs_warning.inkatlas', part: 'abs_warning', color: '#ff9e14', preview: 'icons/abs_warning.png' },
+    { key: 'batteryWarning', label: 'Battery', atlas: 'oitenk\\car_tuning\\battery_warning.inkatlas', part: 'battery_warning', color: '#ff3d3d', preview: 'icons/battery_warning.png', lamp: 'battery' },
+    { key: 'brakeWarning', label: 'Brake warning', atlas: 'oitenk\\car_tuning\\brake_warning.inkatlas', part: 'brake_warning', color: '#ff3d3d', preview: 'icons/brake_warning.png' },
+    { key: 'cruiseControl', label: 'Cruise control', atlas: 'oitenk\\car_tuning\\cruise_control.inkatlas', part: 'cruise_control', color: '#45ff6e', preview: 'icons/cruise_control.png' },
+    { key: 'directionIndicator', label: 'Direction indicators', atlas: 'oitenk\\car_tuning\\direction_indicator.inkatlas', part: 'direction_indicator', color: '#45ff6e', preview: 'icons/direction_indicator.png' },
+    { key: 'doorsOpen', label: 'Doors open', atlas: 'oitenk\\car_tuning\\doors_open.inkatlas', part: 'doors_open', color: '#ff3d3d', preview: 'icons/doors_open.png' },
+    { key: 'eco', label: 'ECO', atlas: 'oitenk\\car_tuning\\eco.inkatlas', part: 'eco', color: '#45ff6e', preview: 'icons/eco.png' },
+    { key: 'engineEmissions', label: 'Check engine', atlas: 'oitenk\\car_tuning\\engine_emissions.inkatlas', part: 'engine_emissions', color: '#ff9e14', preview: 'icons/engine_emissions.png', lamp: 'checkEngine' },
+    { key: 'hillDescentControl', label: 'Hill descent control', atlas: 'oitenk\\car_tuning\\hill_descent_control.inkatlas', part: 'hill_descent_control', color: '#45ff6e', preview: 'icons/hill_descent_control.png' },
+    { key: 'hoodOpen', label: 'Hood open', atlas: 'oitenk\\car_tuning\\hood_open.inkatlas', part: 'hood_open', color: '#ff3d3d', preview: 'icons/hood_open.png' },
+    { key: 'information', label: 'Information', atlas: 'oitenk\\car_tuning\\information.inkatlas', part: 'information', color: '#5e9eff', preview: 'icons/information.png' },
+    { key: 'keyNotInVehicle', label: 'Key not in vehicle', atlas: 'oitenk\\car_tuning\\key_not_in_vehicle.inkatlas', part: 'key_not_in_vehicle', color: '#ff9e14', preview: 'icons/key_not_in_vehicle.png' },
+    { key: 'oilPressureLow', label: 'Oil pressure low', atlas: 'oitenk\\car_tuning\\oil_pressure_low.inkatlas', part: 'oil_pressure_low', color: '#ff3d3d', preview: 'icons/oil_pressure_low.png' },
+    { key: 'parkingAssist', label: 'Parking assist', atlas: 'oitenk\\car_tuning\\parking_assist.inkatlas', part: 'parking_assist', color: '#ff9e14', preview: 'icons/parking_assist.png' },
+    { key: 'parkingBrake', label: 'Parking brake', atlas: 'oitenk\\car_tuning\\parking_brake.inkatlas', part: 'parking_brake', color: '#ff3d3d', preview: 'icons/parking_brake.png' },
+    { key: 'rearWindowDefrost', label: 'Rear window defrost', atlas: 'oitenk\\car_tuning\\rear_window_defrost.inkatlas', part: 'rear_window_defrost', color: '#ff9e14', preview: 'icons/rear_window_defrost.png' },
+    { key: 'seatbelt', label: 'Seatbelt', atlas: 'oitenk\\car_tuning\\seatbelt.inkatlas', part: 'seatbelt', color: '#ff3d3d', preview: 'icons/seatbelt.png' },
+    { key: 'serviceReminder', label: 'Service reminder', atlas: 'oitenk\\car_tuning\\service_reminder.inkatlas', part: 'service_reminder', color: '#ff9e14', preview: 'icons/service_reminder.png' },
+    { key: 'serviceRequired', label: 'Service required', atlas: 'oitenk\\car_tuning\\service_required.inkatlas', part: 'service_required', color: '#ff9e14', preview: 'icons/service_required.png' },
+    { key: 'speedLimiter', label: 'Speed limiter', atlas: 'oitenk\\car_tuning\\speed_limiter.inkatlas', part: 'speed_limiter', color: '#45ff6e', preview: 'icons/speed_limiter.png' },
+    { key: 'tempWarning', label: 'Temperature warning', atlas: 'oitenk\\car_tuning\\temp_warning.inkatlas', part: 'temp_warning', color: '#ff3d3d', preview: 'icons/temp_warning.png' },
+    { key: 'tirePressureLow', label: 'Tyre pressure low', atlas: 'oitenk\\car_tuning\\tire_pressure_low.inkatlas', part: 'tire_pressure_low', color: '#ff9e14', preview: 'icons/tire_pressure_low.png' },
+    { key: 'trunkOpen', label: 'Trunk open', atlas: 'oitenk\\car_tuning\\trunk_open.inkatlas', part: 'trunk_open', color: '#ff3d3d', preview: 'icons/trunk_open.png' },
+    { key: 'washerFluidLow', label: 'Washer fluid low', atlas: 'oitenk\\car_tuning\\washer_fluid_low.inkatlas', part: 'washer_fluid_low', color: '#ff9e14', preview: 'icons/washer_fluid_low.png' },
   ];
   const atlasKey = (a) => String(a || '').trim().replace(/\//g, '\\').replace(/\\+/g, '\\').toLowerCase();
   const ctIconFor = (atlas) => CT_ICONS.find((i) => atlasKey(i.atlas) === atlasKey(atlas)) || null;
