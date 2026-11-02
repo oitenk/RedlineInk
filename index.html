@@ -1100,12 +1100,13 @@ button, input, select, textarea { font: inherit; color: inherit; }
   // --------------------------------------------------------------- inspector
   const SOURCE_OPTIONS = {
     arc: [['static', 'Decoration (always drawn)'], ['rpm', 'Tachometer: follows RPM'], ['speed', 'Speedometer: follows speed'],
-      ['fuel', 'Fuel gauge'], ['value', 'Custom value from your mod']],
-    needle: [['static', 'Fixed pointer'], ['speed', 'Speed needle'], ['rpm', 'RPM needle'], ['fuel', 'Fuel needle'],
+      ['fuel', 'Fuel gauge (D.O.P.E.: full for now)'], ['value', 'Custom value from your mod']],
+    needle: [['static', 'Fixed pointer'], ['speed', 'Speed needle'], ['rpm', 'RPM needle'], ['fuel', 'Fuel needle (D.O.P.E.: full for now)'],
       ['value', 'Custom value from your mod']],
     text: [['static', 'Label'], ['speed', 'Speed number'], ['rpm', 'RPM number'], ['rpm1000', 'RPM in thousands'], ['gear', 'Gear'],
-      ['fuelPct', 'Fuel percent'], ['units', 'Speed units (km/h or mph)'], ['odometer', 'Odometer'], ['trip', 'Trip meter'],
-      ['distUnits', 'Distance units (km or mi)'], ['driveMode', 'Drive mode (Comfort, Sport, Track)'], ['carName', 'Car name'],
+      ['fuelPct', 'Fuel percent (D.O.P.E.: 100% for now)'], ['units', 'Speed units (km/h or mph)'], ['odometer', 'Odometer (not in D.O.P.E. yet)'],
+      ['trip', 'Trip meter (not in D.O.P.E. yet)'], ['distUnits', 'Distance units (km or mi)'],
+      ['driveMode', 'Drive mode (not in D.O.P.E. yet)'], ['carName', 'Car name'],
       ['carRecord', 'Car record name (for the Cars rule)']],
   };
   SOURCE_OPTIONS.numbers = [['speed', 'Speed: 0 to full-scale speed'], ['rpm', 'RPM in thousands'], ['labels', 'My own labels']];
@@ -1139,7 +1140,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
     if (spec.type === 'number') {
       return '<label class="field' + wide + '"><span>' + spec.label + '</span><input type="number" id="' + id + '" data-key="' + spec.key
         + '" value="' + esc(v) + '" step="' + (spec.step || 1) + '"' + (spec.min !== undefined ? ' min="' + spec.min + '"' : '')
-        + (spec.max !== undefined ? ' max="' + spec.max + '"' : '') + '></label>';
+        + (spec.max !== undefined ? ' max="' + spec.max + '"' : '') + '>'
+        + (spec.help ? '<span class="help">' + spec.help + '</span>' : '') + '</label>';
     }
     if (spec.type === 'text') {
       return '<label class="field' + wide + '"><span>' + spec.label + '</span><input type="text" id="' + id + '" data-key="' + spec.key
@@ -1330,7 +1332,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
         if (when === 'ct') {
           const lamp = G.ctLamp(l.lamp) || G.CT_LAMPS[0];
           F.push('<label class="field wide"><span>D.O.P.E. light</span><select data-light="lamp" data-rebuild>'
-            + G.CT_LAMPS.map((x) => '<option value="' + x.key + '"' + (lamp.key === x.key ? ' selected' : '') + '>' + esc(x.label) + '</option>').join('')
+            + G.CT_LAMPS.map((x) => '<option value="' + x.key + '"' + (lamp.key === x.key ? ' selected' : '') + '>' + esc(x.label + (x.notYet ? ' (not in D.O.P.E. yet)' : '')) + '</option>').join('')
             + '</select><span class="help">' + esc(lamp.help)
             + (state.design.hook !== 'carTuning' ? ' Feed the dashboard from D.O.P.E. (dashboard settings) for it to light.' : '')
             + '</span></label>');
@@ -1410,7 +1412,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
     F.push(field({ key: 'hook', label: 'Feed it from', type: 'select', wide: true, rebuild: true,
       options: [['carTuning', 'D.O.P.E. (its own window on the HUD)'], ['stock', 'The stock car HUD (automatic)'], ['none', 'My own code only']],
       help: d.hook === 'none' ? 'Call Attach(parent), SetSpeed, SetRpm and SetGear yourself.'
-        : d.hook === 'carTuning' ? 'Shows in a window of its own while V drives, fed by the car and by D.O.P.E.\'s lights and fuel. Save to D.O.P.E. (at the top) writes it as a file into D.O.P.E.\'s dashboards folder, which the mod reads itself: nothing to install, and it shows on the next drive. Needs D.O.P.E. and Codeware.'
+        : d.hook === 'carTuning' ? 'Shows in a window of its own while V drives, fed by the car and by D.O.P.E.\'s lights. Save to D.O.P.E. (at the top) writes it as a file into D.O.P.E.\'s dashboards folder (' + 'red4ext\\plugins\\DopeLab\\dashboards), which the mod reads itself: nothing to install, and it shows on the next drive. Needs D.O.P.E. and Codeware.'
           : 'Shows inside the stock car HUD (third-person view only, and clipped to its window) and receives its speed, RPM and gear.' }, d));
     if (d.hook !== 'none') F.push(field({ key: 'hideStock', label: 'Hide the stock gauges', type: 'check', wide: true }, d));
     if (d.hook === 'carTuning') F.push(field({ key: 'darkWithoutPower', label: 'Dark with the power off', type: 'check', wide: true,
@@ -1457,14 +1459,15 @@ button, input, select, textarea { font: inherit; color: inherit; }
     if (d.offLights !== 'hidden') F.push(field({ key: 'offColor', label: 'Unlit colour', type: 'color' }, d));
     F.push(sect('Readings'));
     F.push(field({ key: 'units', label: 'Speed units', type: 'select', rebuild: true, options: [['kmh', 'km/h'], ['mph', 'mph']] }, d));
-    F.push(field({ key: 'speedMax', label: 'Full-scale speed', type: 'number', min: 1 }, d));
+    F.push(field({ key: 'speedMax', label: 'Full-scale speed', type: 'number', min: 1, wide: d.hook === 'carTuning',
+      help: d.hook === 'carTuning' ? 'In the game the speed follows D.O.P.E.\'s "True speed on the speedometer", as the game\'s own speedometer does. Off (the default), it is the game\'s own figure, which reads high on purpose, up to about twice the true speed near the top: give the dial room.' : '' }, d));
     F.push(field({ key: 'rpmMax', label: 'Full-scale RPM', type: 'number', min: 500, step: 100 }, d));
     F.push(field({ key: 'gearMap', label: 'Gear numbers', type: 'select',
       options: [['stock', 'Stock HUD (0 = R)'], ['plain', 'Plain (-1 = R)']] }, d));
     F.push(field({ key: 'rpmFromCar', label: 'Read full-scale RPM from each car', type: 'check', wide: true }, d));
     F.push(field({ key: 'rpmRedline', label: 'Red zones on RPM gauges', type: 'select', wide: true, rebuild: true,
       options: [['design', 'Where the design puts them'], ['car', 'At the car\'s redline, the dial rounded up to a thousand']],
-      help: d.rpmRedline === 'car' ? 'In the game the dial runs to the next whole thousand above the car\'s redline (with its ECU tune, when D.O.P.E. knows it), the red zones and RPM lights start at the redline itself, and the RPM numbers reach the top. Here the design\'s own red zones are drawn.'
+      help: d.rpmRedline === 'car' ? 'In the game the dial runs to the next whole thousand above the car\'s redline , the red zones and RPM lights start at the redline itself, and the RPM numbers reach the top. Here the design\'s own red zones are drawn.'
         : 'Red zones and RPM lights sit at the share of full scale the design gives them, on every car.' }, d));
     return F.join('');
   }
@@ -1491,7 +1494,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
     const key = el.type === 'text' ? 'content' : 'source';
     const opts = SOURCE_OPTIONS[el.type];
     let label = '';
-    if (opts && el[key] && el[key] !== 'static') label = (opts.find((o) => o[0] === el[key]) || [, ''])[1].split(':')[0];
+    if (opts && el[key] && el[key] !== 'static') label = (opts.find((o) => o[0] === el[key]) || [, ''])[1].replace(/ \((?:D\.O\.P\.E\.|not in)[^)]*\)$/, '').split(':')[0];
     if (el.light && el.light.when) label = label ? label + ' + light' : 'light';
     return label;
   }
@@ -1857,7 +1860,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
       + '<button class="btn small" id="zipCode">Download .zip</button>'
       + '<span class="where">' + esc(zipPath()) + ' · ' + code.split('\n').length + ' lines</span></div>'
       + (state.design.hook === 'carTuning' ? '<div class="checks"><strong>With D.O.P.E. you need no script.</strong> Save to D.O.P.E. writes the dashboard as a file the mod reads itself, '
-        + 'and D.O.P.E. shows the one most the car\'s own. This script is the older way, a mod of its own; it still works, but a scripted dashboard and the same design as a file would both show.</div>' : '')
+        + 'and D.O.P.E. shows the one most the car\'s own. This script is the older way, a mod of its own, and is for the earlier D.O.P.E. build (Car Tuning) only: D.O.P.E. now reads dashboards as files.</div>' : '')
       + (problems.length ? '<div class="checks"><strong>Before you export</strong><ul>' + problems.map((p) => '<li>' + esc(p) + '</li>').join('') + '</ul></div>' : '')
       + '<pre class="code" id="codeView" tabindex="0">' + highlight(code) + '</pre>';
   }
@@ -2070,7 +2073,10 @@ button, input, select, textarea { font: inherit; color: inherit; }
   // ---- Save to D.O.P.E. (2026-10-24): the dashboard file written straight into the game's dashboards folder. Chrome
   // and Edge let a page write into a folder the user picks once (the handle is kept in IndexedDB; the browser asks
   // again for permission as it sees fit); elsewhere, and where a page may not ask, the file downloads to be put there.
-  const DASH_FOLDER_HINT = 'Cyberpunk 2077\\red4ext\\plugins\\CarTuning\\dashboards';
+  // 0.1.9: D.O.P.E.'s folder since its rebuild (DopeLab). The handle is kept under a new key, so a folder picked before (the earlier Car Tuning
+  // build's) is asked for once more instead of being written to.
+  const DASH_FOLDER_HINT = 'Cyberpunk 2077\\red4ext\\plugins\\DopeLab\\dashboards';
+  const DASH_FOLDER_KEY = 'dopeLabFolder';
   function idb(mode, fn) {
     return new Promise((resolve, reject) => {
       const req = indexedDB.open('redline-ink', 1);
@@ -2086,10 +2092,11 @@ button, input, select, textarea { font: inherit; color: inherit; }
   }
   async function gameFolder(ask) {
     let handle = null;
-    if (!ask) { try { handle = await idb('readonly', (s) => s.get('dopeFolder')); } catch (e) { handle = null; } }
+    if (!ask) { try { handle = await idb('readonly', (s) => s.get(DASH_FOLDER_KEY)); } catch (e) { handle = null; } }
     if (!handle) {
-      handle = await window.showDirectoryPicker({ id: 'dope-dashboards', mode: 'readwrite' });
-      try { await idb('readwrite', (s) => s.put(handle, 'dopeFolder')); } catch (e) { /* kept for this visit only */ }
+      toast('Pick D.O.P.E.\'s dashboards folder: ' + DASH_FOLDER_HINT + '.');
+      handle = await window.showDirectoryPicker({ id: 'dopelab-dashboards', mode: 'readwrite' });
+      try { await idb('readwrite', (s) => s.put(handle, DASH_FOLDER_KEY)); } catch (e) { /* kept for this visit only */ }
     }
     if ((await handle.queryPermission({ mode: 'readwrite' })) !== 'granted'
       && (await handle.requestPermission({ mode: 'readwrite' })) !== 'granted') throw new Error('no permission');

@@ -30,29 +30,30 @@
   // the scripts compile, so a dashboard left behind does nothing instead of stopping every script mod from loading.
   const CT_GUARD = '@if(ModuleExists("CarTuning") && ModuleExists("Codeware"))';
 
-  // D.O.P.E.'s dashboard feed (CarTuningDash, in the mod's Traction.reds): the lamps it reports: 0 off, 1 lit,
-  // 2 flashing four times a second; -1 for one the car does not have at all (optional:
-  // those lights are hidden then). Keep in step with the mod.
+  // D.O.P.E.'s dashboard feed: the lamps it reports: 0 off, 1 lit, 2 flashing four times a second; -1 for one the car
+  // does not have at all (optional: those lights are hidden then). Keep in step with the mod: D.O.P.E.'s
+  // DopeLabDash.Lamp (DashboardsHook.reds) since 0.1.9; notYet marks the lamps it does not send yet (the earlier
+  // Car Tuning build sent them all).
   const CT_LAMPS = [
     { key: 'traction', label: 'Traction control', flashes: true, optional: true,
-      help: 'Lit while traction control is switched off; flashes while it acts. Hidden on a car without traction control.' },
+      help: 'Lit while traction control is switched off; flashes while it acts. Hidden with D.O.P.E.\'s tyre model off. D.O.P.E. does not flash it yet.' },
     { key: 'hillHold', label: 'Hill hold armed', optional: true,
-      help: 'Lit while hill hold is armed or holding. Hidden on a car without the real gearbox.' },
+      help: 'Lit while hill hold is armed or holding. Hidden on a car without the real gearbox. Not sent by D.O.P.E. yet: the light stays hidden.', notYet: true },
     { key: 'hillHoldOff', label: 'Hill hold off', optional: true,
-      help: 'Lit while hill hold is switched off. Hidden on a car without the real gearbox.' },
+      help: 'Lit while hill hold is switched off. Hidden on a car without the real gearbox. Not sent by D.O.P.E. yet: the light stays hidden.', notYet: true },
     { key: 'launch', label: 'Launch control', flashes: true, optional: true,
-      help: 'Lit while launch control is armed or staged; flashes while the car launches. Hidden on a car without the ECU tune that brings it.' },
+      help: 'Lit while launch control is armed or staged; flashes while the car launches. Hidden on a car without the ECU tune that brings it. Not sent by D.O.P.E. yet: the light stays hidden.', notYet: true },
     { key: 'headlights', label: 'Headlights on', help: 'Lit while the headlights are on, low or high beams.' },
     { key: 'highBeam', label: 'High beams', help: 'Lit while the high beams are on.' },
     { key: 'fuelLow', label: 'Low fuel', flashes: true, optional: true,
-      help: 'Lit under 15% of the tank; flashes when nearly empty. Hidden with D.O.P.E.\'s fuel off.' },
+      help: 'Lit under 15% of the tank; flashes when nearly empty. Hidden with D.O.P.E.\'s fuel off. Not sent by D.O.P.E. yet: the light stays hidden.', notYet: true },
     { key: 'battery', label: 'Battery', help: 'Lit with the power on and the engine off, as a real car\'s battery light.' },
     { key: 'power', label: 'Power on', help: 'Lit while the car has power.' },
     { key: 'engine', label: 'Engine running', help: 'Lit while the engine runs.' },
     { key: 'knock', label: 'Knock (fuel grade too low)', optional: true,
-      help: 'Lit while the engine knocks on too low a fuel grade and so has less power. Hidden with the fuel grades off.' },
-    { key: 'checkEngine', label: 'Check engine', flashes: true,
-      help: 'Lit while the engine\'s health is under 80% and it has less power; flashes in limp mode, under 15%.' },
+      help: 'Lit while the engine knocks on too low a fuel grade and so has less power. Hidden with the fuel grades off. Not sent by D.O.P.E. yet: the light stays hidden.', notYet: true },
+    { key: 'checkEngine', label: 'Check engine', flashes: true, notYet: true,
+      help: 'Lit while the engine\'s health is under 80% and it has less power; flashes in limp mode, under 15%. Not sent by D.O.P.E. yet: the light stays hidden.' },
   ];
   const ctLamp = (key) => CT_LAMPS.find((l) => l.key === key) || null;
 
@@ -2254,7 +2255,7 @@
   // Where the export goes under r6/scripts: a dashboard fed from D.O.P.E. goes into D.O.P.E.'s Dashboards folder
   // (it still installs as a mod of its own); any other in a folder of its own.
   // ---- the dashboard file (2026-10-24): what "Save to D.O.P.E." writes into D.O.P.E.'s dashboards folder
-  // (red4ext/plugins/CarTuning/dashboards), where the mod's own runtime reads it: the design as it is, without the
+  // (red4ext/plugins/DopeLab/dashboards; red4ext/plugins/CarTuning/dashboards in the earlier Car Tuning build), where the mod's own runtime reads it: the design as it is, without the
   // preview pictures, marked with a format and a version. Named after the design.
   function dashboardFile(design) {
     const d = JSON.parse(JSON.stringify(design));
