@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.11
+
+The odometer and trip meter are no longer marked "not in D.O.P.E. yet": D.O.P.E. 0.3.108 sends them. Your own cars count
+from zero, any other car V gets into already has a used car's mileage, and every car has a trip from zero.
+
 ## 0.1.10
 
 The hill hold and launch control lights are no longer marked "not in D.O.P.E. yet": D.O.P.E. sends them now. Hill hold
