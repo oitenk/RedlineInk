@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.10
+
+The hill hold and launch control lights are no longer marked "not in D.O.P.E. yet": D.O.P.E. sends them now. Hill hold
+lights while it is armed or holding, its off light while it is not armed, and launch control lights while armed and
+flashes while the car launches.
+
 ## 0.1.9
 
 Save to D.O.P.E. now writes into D.O.P.E.'s new dashboards folder, `red4ext\plugins\DopeLab\dashboards`. The page asks
