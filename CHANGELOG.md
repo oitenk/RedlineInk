@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.12
+
+The traction control light's help no longer says D.O.P.E. doesn't flash it: from D.O.P.E. 0.3.110 it flashes while traction
+control is cutting the power.
+
 ## 0.1.11
 
 The odometer and trip meter are no longer marked "not in D.O.P.E. yet": D.O.P.E. 0.3.108 sends them. Your own cars count

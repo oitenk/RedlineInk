@@ -36,7 +36,7 @@
   // Car Tuning build sent them all).
   const CT_LAMPS = [
     { key: 'traction', label: 'Traction control', flashes: true, optional: true,
-      help: 'Lit while traction control is switched off; flashes while it acts. Hidden with D.O.P.E.\'s tyre model off. D.O.P.E. does not flash it yet.' },
+      help: 'Lit while traction control is switched off; flashes while it acts. Hidden with D.O.P.E.\'s tyre model off.' },
     { key: 'hillHold', label: 'Hill hold armed', optional: true,
       help: 'Lit while hill hold is armed or holding (H arms and disarms it).' },
     { key: 'hillHoldOff', label: 'Hill hold off', optional: true,
@@ -57,7 +57,7 @@
   ];
   const ctLamp = (key) => CT_LAMPS.find((l) => l.key === key) || null;
 
-  // D.O.P.E.'s own icons, in its CarTuning.archive (one sheet per icon, oitenk/car_tuning/<name>.inkatlas, the part
+  // D.O.P.E.'s own icons, in its DopeLab.archive (one sheet per icon, oitenk/car_tuning/<name>.inkatlas, the part
   // named as the sheet): since 2026-10-24 the set drawn by fauxboxart.co.official, plus the hill hold light. Each has
   // the colour it is drawn for, its preview picture (icons/<name>.png, a white glyph the editor tints as the game
   // does) and, where D.O.P.E. reports one, the lamp it stands for. Keep in step with the mod's art/icons.py.
