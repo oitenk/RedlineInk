@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.16
+
+NEW! Radio artist and radio song title readouts: the game's "Artist - Title" split in two. The radio song readout with both stays.
+
+NEW! "When it is too long" on a text readout: cut off as before, or scroll along. In the game a scrolling text that is wider than
+its box slides along and back to the start; the editor shows the start. Needs D.O.P.E. 0.5.19 or later.
+
 ## 0.1.15
 
 NEW! Info screen pages: give any part a page number (0 shows it always). In the game, D.O.P.E.'s info screen keys turn the pages,

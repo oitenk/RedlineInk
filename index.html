@@ -461,7 +461,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
     sim: { speed: 79, rpm: 4300, gear: 3, fuel: 0.58, metric: null, flags: {}, values: {}, lamps: { power: 1, engine: 1 },
       odometerKm: 77612.4, tripKm: 19.8, driveMode: 1,
       page: 1, selected: 0, toggles: { traction: true, hillHold: false, launch: true },
-      radioOn: true, radioStation: 'Night City Radio', radioSong: 'Song title', clockMinutes: 19 * 60 + 5 },
+      radioOn: true, radioStation: 'Night City Radio', radioSong: 'Artist Name - A Rather Long Song Title', clockMinutes: 19 * 60 + 5 },
     tab: 'layers',
     isExample: false,
     docId: null,           // saved design document this draft belongs to
@@ -695,7 +695,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
         body = '<rect x="' + r1(el.cx) + '" y="' + r1(el.cy - el.thickness / 2) + '" width="' + r1(el.length) + '" height="'
           + r1(el.thickness) + '" fill="' + esc(fill) + '" transform="rotate(' + r1(deg) + ' ' + r1(el.cx) + ' ' + r1(el.cy) + ')"/>';
       } else if (el.type === 'text') {
-        const value = G.textValue(d, el, live);
+        const value = G.scrollWindow(el, G.textValue(d, el, live));
         const anchor = el.align === 'left' ? 'start' : el.align === 'right' ? 'end' : 'middle';
         const x = el.align === 'left' ? el.x : el.align === 'right' ? el.x + el.w : el.x + el.w / 2;
         body = '<rect x="' + r1(el.x) + '" y="' + r1(el.y) + '" width="' + r1(el.w) + '" height="' + r1(el.h)
@@ -1118,7 +1118,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
       ['fuelPct', 'Fuel percent (D.O.P.E.: 100% for now)'], ['units', 'Speed units (km/h or mph)'], ['odometer', 'Odometer'],
       ['trip', 'Trip meter'], ['distUnits', 'Distance units (km or mi)'],
       ['driveMode', 'Drive mode (not in D.O.P.E. yet)'], ['carName', 'Car name'],
-      ['carRecord', 'Car record name (for the Cars rule)'], ['radioStation', 'Radio station'], ['radioSong', 'Radio song'],
+      ['carRecord', 'Car record name (for the Cars rule)'], ['radioStation', 'Radio station'], ['radioSong', 'Radio song (artist - title)'],
+      ['radioArtist', 'Radio artist'], ['radioTitle', 'Radio song title'],
       ['clock', 'Time of day'], ['tractionState', 'Traction control: on / off'], ['hillHoldState', 'Hill hold: on / off'],
       ['launchState', 'Launch control: on / off']],
   };
@@ -1146,6 +1147,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
     driveMode: 'Shows D.O.P.E.\'s drive mode in your words and colour for each mode. Leave a mode\'s text empty to show nothing in it.',
     radioStation: 'Shows the station the car\'s radio plays, as the game names it; nothing with the radio off. D.O.P.E. 0.5.18 or later.',
     radioSong: 'Shows the song the car\'s radio plays; nothing with the radio off. D.O.P.E. 0.5.18 or later.',
+    radioArtist: 'Shows the artist of the song the car\'s radio plays; nothing with the radio off. D.O.P.E. 0.5.19 or later.',
+    radioTitle: 'Shows the title of the song the car\'s radio plays, without the artist; nothing with the radio off. D.O.P.E. 0.5.19 or later.',
     clock: 'Shows the time of day in the game. D.O.P.E. 0.5.18 or later.',
     tractionState: 'Shows whether traction control is on for this drive, in your words; -- with D.O.P.E.\'s tyre model off. Make it a toggle below to switch it from the info screen.',
     hillHoldState: 'Shows whether hill hold is armed for this drive, in your words. Make it a toggle below to switch it from the info screen.',
@@ -1298,6 +1301,12 @@ button, input, select, textarea { font: inherit; color: inherit; }
       }
       if (el.content === 'clock') {
         F.push(field({ key: 'clock', label: 'Clock', type: 'select', options: [['12h', '12 hours (7:05 PM)'], ['24h', '24 hours (19:05)']] }, el));
+      }
+      if (state.design.hook === 'carTuning' && el.content && el.content !== 'static') {
+        F.push(field({ key: 'overflow', label: 'When it is too long', type: 'select', wide: true, rebuild: true,
+          options: [['clip', 'Cut off'], ['scroll', 'Scroll along']],
+          help: el.overflow === 'scroll' ? 'In the game a text wider than its box slides along: still at the start, then to the end, still again, and round. Here the start is shown. D.O.P.E. 0.5.19 or later.'
+            : 'A text wider than its box runs past it. Scroll along suits a radio song.' }, el));
       }
       if (state.design.hook === 'carTuning') {
         F.push(field({ key: 'action', label: 'Toggle on the info screen', type: 'select', wide: true, rebuild: true,

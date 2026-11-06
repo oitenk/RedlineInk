@@ -303,6 +303,19 @@
     if (on === null || on === undefined) return '--';
     return on ? (el.wordOn ?? 'ON') : (el.wordOff ?? 'OFF');
   }
+  // The game names a song "Artist - Title"; without the dash it is all title.
+  function songPart(song, title) {
+    const at = song.indexOf(' - ');
+    if (at < 0) return title ? song : '';
+    return title ? song.slice(at + 3) : song.slice(0, at);
+  }
+  // A scrolling text as the preview shows it: the characters that fit in its box, from the start (in the game they slide along).
+  // A character is guessed at half the font size, as D.O.P.E. guesses before it has measured the font.
+  function scrollWindow(el, value) {
+    if (el.overflow !== 'scroll') return value;
+    const fit = Math.max(1, Math.floor(num(el.w, 100) / (num(el.size, 16) * 0.5)));
+    return value.length > fit ? value.slice(0, fit) : value;
+  }
   function clockText(el, state) {
     const minutes = Math.max(0, Math.round(num(state.clockMinutes, 19 * 60 + 5))) % (24 * 60);
     const h = Math.floor(minutes / 60), m = minutes % 60;
@@ -322,6 +335,8 @@
     switch (el.content) {
       case 'radioStation': return state.radioOn === false ? '' : (state.radioStation || '');
       case 'radioSong': return state.radioOn === false ? '' : (state.radioSong || '');
+      case 'radioArtist': return state.radioOn === false ? '' : songPart(state.radioSong || '', false);
+      case 'radioTitle': return state.radioOn === false ? '' : songPart(state.radioSong || '', true);
       case 'clock': return clockText(el, state);
       case 'speed': return String(Math.round(displaySpeed(design, state)));
       case 'rpm': return String(Math.round(num(state.rpm)));
@@ -682,7 +697,7 @@
         problems.push(label + ' has a localization key with spaces or symbols.');
       }
     });
-    const infoContents = ['radioStation', 'radioSong', 'clock', 'tractionState', 'hillHoldState', 'launchState'];
+    const infoContents = ['radioStation', 'radioSong', 'radioArtist', 'radioTitle', 'clock', 'tractionState', 'hillHoldState', 'launchState'];
     if (els.some((e) => num(e.page, 0) > 0 || e.action || (e.type === 'text' && infoContents.includes(e.content)))) {
       problems.push('The info screen (pages, toggles, the radio, the clock and the on / off readouts) works with "Save to D.O.P.E." and D.O.P.E. 0.5.18 or later. '
         + 'The redscript export shows every page at once, the toggles do nothing and those readouts stay empty.');
@@ -2342,7 +2357,7 @@
     arcSegments, barSegments, lineRect, boxRect, segmentsFor,
     DIAL_MAX, dialNumbers, dialValues, dialPlace, dialTurn, dialBox, dialLabels, dialStep, dialCount,
     displaySpeed, rpmMax, sourceFraction, inRange, hasRange, textValue, gearText, lightOn, litCount, redFromIndex,
-    TOGGLE_ACTIONS, STATE_CONTENTS, pageCount, shownPage, onShownPage, shownToggles, isSelected,
+    TOGGLE_ACTIONS, STATE_CONTENTS, pageCount, shownPage, onShownPage, shownToggles, isSelected, songPart, scrollWindow,
     lightOffLook, unlitColorOf, baseColorOf, isRole, paletteOf, roleOf, resolveColor, resolveEl, roleId, COLOR_KEYS, MAX_ROLES,
     CAR_CLASSES, VANILLA_CARS, carList, carMakers, carsOnly,
     generate, check, fileNameFor, folderFor, installFolderFor, dashboardFile, dashboardFileName, pascal, ident, rgb,
