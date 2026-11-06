@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.14
+
+NEW! D.O.P.E. light for the parking brake. Picking the parking brake icon on a D.O.P.E. dashboard makes it that light. Needs
+D.O.P.E. 0.5.9 or later.
+
+The driver and passenger door icons are now layers, with a new "car body" layer: put all three at the same place and size.
+The body lights while any door is open, and each door while it is open.
+
 ## 0.1.13
 
 NEW! Three more D.O.P.E. icons: fog lights, driver door open and passenger door open.
