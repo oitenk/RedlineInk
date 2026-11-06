@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.13
+
+NEW! Three more D.O.P.E. icons: fog lights, driver door open and passenger door open.
+
+NEW! D.O.P.E. lights for the driver's door, the passenger's door, any door, the hood and the trunk being open, and for the fog
+(utility) lights. Picking the doors, hood, trunk or fog light icon on a D.O.P.E. dashboard makes it that light. Needs D.O.P.E.
+0.5.7 or later.
+
 ## 0.1.12
 
 The traction control light's help no longer says D.O.P.E. doesn't flash it: from D.O.P.E. 0.3.110 it flashes while traction
