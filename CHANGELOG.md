@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.1.15
+
+NEW! Info screen pages: give any part a page number (0 shows it always). In the game, D.O.P.E.'s info screen keys turn the pages,
+the arrow keys to start with; the test drive has Previous and Next buttons. Selecting a part shows its page.
+
+NEW! Toggles on the info screen: make a text a toggle for traction control, hill hold or launch control. In the game the up and
+down arrows highlight a toggle and Enter switches it for the drive. The highlighted toggle takes a colour and a mark of its own
+(design settings, Info screen).
+
+NEW! Readouts for the radio station and song, the time of day, and traction control, hill hold and launch control on or off in
+your own words.
+
+All of these need "Save to D.O.P.E." and D.O.P.E. 0.5.18 or later.
+
 ## 0.1.14
 
 NEW! D.O.P.E. light for the parking brake. Picking the parking brake icon on a D.O.P.E. dashboard makes it that light. Needs

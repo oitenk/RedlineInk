@@ -459,7 +459,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
     zoom: 'fit',
     grid: 10, snap: true, showGrid: true, ghosts: true,
     sim: { speed: 79, rpm: 4300, gear: 3, fuel: 0.58, metric: null, flags: {}, values: {}, lamps: { power: 1, engine: 1 },
-      odometerKm: 77612.4, tripKm: 19.8, driveMode: 1 },
+      odometerKm: 77612.4, tripKm: 19.8, driveMode: 1,
+      page: 1, selected: 0, toggles: { traction: true, hillHold: false, launch: true },
+      radioOn: true, radioStation: 'Night City Radio', radioSong: 'Song title', clockMinutes: 19 * 60 + 5 },
     tab: 'layers',
     isExample: false,
     docId: null,           // saved design document this draft belongs to
@@ -581,7 +583,16 @@ button, input, select, textarea { font: inherit; color: inherit; }
     const metric = s.metric === null ? d.units !== 'mph' : s.metric;
     const mps = s.speed / (metric ? G.MPS_TO_KMH : G.MPS_TO_MPH);
     return { speedMps: mps, rpm: s.rpm, rpmMax: d.rpmMax, gear: s.gear, fuel: s.fuel, metric: metric,
-      flags: s.flags, values: s.values, lamps: s.lamps, odometerKm: s.odometerKm, tripKm: s.tripKm, driveMode: s.driveMode };
+      flags: s.flags, values: s.values, lamps: s.lamps, odometerKm: s.odometerKm, tripKm: s.tripKm, driveMode: s.driveMode,
+      page: shownPageNow(), selected: s.selected, toggles: s.toggles, radioOn: s.radioOn, radioStation: s.radioStation,
+      radioSong: s.radioSong, clockMinutes: s.clockMinutes };
+  }
+
+  // The info screen page the canvas shows: the test drive's, or the page of the selected part, so it can be edited.
+  function shownPageNow() {
+    const el = state.design && state.selected ? state.design.elements.find((e) => e.id === state.selected) : null;
+    const page = el ? Math.max(0, Math.round(n(el.page, 0))) : 0;
+    return page > 0 ? page : state.sim.page;
   }
 
   // The D.O.P.E. lamps the design uses, and the power when the dash goes dark without it.
@@ -640,7 +651,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
   function elementSvg(el, live, defs) {
     const d = state.design;
     el = G.resolveEl(d, el);
-    let fill = G.baseColorOf(el, live);
+    let fill = G.baseColorOf(el, live, d);
     let visible = true, flash = false, blink = 0, litFill = null;
     // without the car's power: unlit (dimmed, every light off), or hidden
     const darkNow = dashDark();
@@ -842,7 +853,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
         + '<pattern id="gridMajor" width="' + g * 5 + '" height="' + g * 5 + '" patternUnits="userSpaceOnUse"><rect width="' + g * 5
         + '" height="' + g * 5 + '" fill="url(#gridMinor)"/><path d="M ' + g * 5 + ' 0 L 0 0 0 ' + g * 5
         + '" fill="none" stroke="#1a2228" stroke-width="1"/></pattern>' : '';
-    const els = d.elements.map((el) => elementSvg(el, live, defs)).join('');
+    const els = d.elements.filter((el) => G.onShownPage(d, el, live)).map((el) => elementSvg(el, live, defs)).join('');
     const sel = selEl();
     stage.setAttribute('viewBox', (-PAD) + ' ' + (-PAD) + ' ' + (W + PAD * 2) + ' ' + (H + PAD * 2));
     stage.innerHTML = '<defs>' + grid + defs.join('') + '</defs>'
@@ -1107,7 +1118,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
       ['fuelPct', 'Fuel percent (D.O.P.E.: 100% for now)'], ['units', 'Speed units (km/h or mph)'], ['odometer', 'Odometer'],
       ['trip', 'Trip meter'], ['distUnits', 'Distance units (km or mi)'],
       ['driveMode', 'Drive mode (not in D.O.P.E. yet)'], ['carName', 'Car name'],
-      ['carRecord', 'Car record name (for the Cars rule)']],
+      ['carRecord', 'Car record name (for the Cars rule)'], ['radioStation', 'Radio station'], ['radioSong', 'Radio song'],
+      ['clock', 'Time of day'], ['tractionState', 'Traction control: on / off'], ['hillHoldState', 'Hill hold: on / off'],
+      ['launchState', 'Launch control: on / off']],
   };
   SOURCE_OPTIONS.numbers = [['speed', 'Speed: 0 to full-scale speed'], ['rpm', 'RPM in thousands'], ['labels', 'My own labels']];
   const NUMBERS_HELP = {
@@ -1131,6 +1144,12 @@ button, input, select, textarea { font: inherit; color: inherit; }
     trip: 'Shows the trip meter to a tenth, in km or miles as the speed. Reset it in D.O.P.E.\'s vehicle controls window.',
     distUnits: 'Shows km or mi, matching the odometer and the trip.',
     driveMode: 'Shows D.O.P.E.\'s drive mode in your words and colour for each mode. Leave a mode\'s text empty to show nothing in it.',
+    radioStation: 'Shows the station the car\'s radio plays, as the game names it; nothing with the radio off. D.O.P.E. 0.5.18 or later.',
+    radioSong: 'Shows the song the car\'s radio plays; nothing with the radio off. D.O.P.E. 0.5.18 or later.',
+    clock: 'Shows the time of day in the game. D.O.P.E. 0.5.18 or later.',
+    tractionState: 'Shows whether traction control is on for this drive, in your words; -- with D.O.P.E.\'s tyre model off. Make it a toggle below to switch it from the info screen.',
+    hillHoldState: 'Shows whether hill hold is armed for this drive, in your words. Make it a toggle below to switch it from the info screen.',
+    launchState: 'Shows whether launch control is on for this drive, in your words; -- with D.O.P.E.\'s tyre model off. Make it a toggle below to switch it from the info screen.',
   };
 
   function field(spec, el) {
@@ -1187,6 +1206,10 @@ button, input, select, textarea { font: inherit; color: inherit; }
     const F = [];
     const pos = (keys) => keys.forEach(([k, l, step]) => F.push(field({ key: k, label: l, type: 'number', step: step || 1 }, el)));
     F.push(field({ key: 'name', label: 'Name', type: 'text', wide: true, help: 'Becomes the field name in the script.' }, el));
+    if (state.design.hook === 'carTuning') {
+      F.push(field({ key: 'page', label: 'Info screen page', type: 'number', min: 0, max: 20, rebuild: true,
+        help: '0: always shown. 1 and up: shown on that page of the info screen only; in the game the info screen keys (the arrow keys to start with) turn the pages. D.O.P.E. 0.5.18 or later.' }, el));
+    }
 
     if (SOURCE_OPTIONS[el.type]) {
       const key = el.type === 'text' ? 'content' : 'source';
@@ -1266,6 +1289,21 @@ button, input, select, textarea { font: inherit; color: inherit; }
           if (!el[k]) el[k] = el.color;
           F.push(field({ key: k, label: label, type: 'color' }, el));
         });
+      }
+      if (G.STATE_CONTENTS[el.content]) {
+        if (el.wordOn === undefined || el.wordOn === null) el.wordOn = 'ON';
+        if (el.wordOff === undefined || el.wordOff === null) el.wordOff = 'OFF';
+        F.push(field({ key: 'wordOn', label: 'On text', type: 'text' }, el));
+        F.push(field({ key: 'wordOff', label: 'Off text', type: 'text' }, el));
+      }
+      if (el.content === 'clock') {
+        F.push(field({ key: 'clock', label: 'Clock', type: 'select', options: [['12h', '12 hours (7:05 PM)'], ['24h', '24 hours (19:05)']] }, el));
+      }
+      if (state.design.hook === 'carTuning') {
+        F.push(field({ key: 'action', label: 'Toggle on the info screen', type: 'select', wide: true, rebuild: true,
+          options: [['', 'None']].concat(G.TOGGLE_ACTIONS),
+          help: el.action ? 'The info screen\'s select keys (the up and down arrows to start with) highlight it, and its switch key (Enter) switches this for the drive, as its own key does. Pair it with that feature\'s on / off readout, or put the readout in this text.'
+            : 'Makes this text a toggle the player can highlight and switch from the info screen.' }, el));
       }
       if (el.content === 'units') {
         F.push(field({ key: 'textMetric', label: 'Metric text', type: 'text' }, el));
@@ -1451,6 +1489,14 @@ button, input, select, textarea { font: inherit; color: inherit; }
       + '<span class="help">Named colours that parts share: any colour field can take one. In the game, with the Mod Settings mod installed, '
       + 'the dashboard gets a page of its own in that menu where the player picks each of these colours, turns all their hues and sets '
       + 'their brightness. Removing a colour leaves the parts that used it with its colour of their own.</span></div>');
+    if (d.hook === 'carTuning') {
+      F.push(sect('Info screen'));
+      F.push(field({ key: 'selectColor', label: 'Highlighted toggle colour', type: 'color' }, d));
+      F.push(field({ key: 'selectMark', label: 'Mark before it', type: 'text',
+        help: 'Shown before the highlighted toggle\'s text, such as > or a space. Pages and toggles are set on each part.' }, d));
+      if (!d.selectColor) d.selectColor = '#ff9e14';
+      if (d.selectMark === undefined || d.selectMark === null) d.selectMark = '> ';
+    }
     F.push(sect('Lights'));
     F.push(field({ key: 'offLights', label: 'Lights that are off', type: 'select', wide: true, rebuild: true,
       options: [['unlit', 'Shown unlit, in a dark colour'], ['hidden', 'Hidden']],
@@ -1743,6 +1789,25 @@ button, input, select, textarea { font: inherit; color: inherit; }
       html += '<div class="ctl"><span>Drive mode</span><div class="chips">' + ['Comfort', 'Sport', 'Track'].map((l, i) =>
         '<button class="chip" data-mode="' + i + '" aria-pressed="' + (mode === i) + '">' + l + '</button>').join('') + '</div></div>';
     }
+    const pages = G.pageCount(d);
+    const toggles = G.shownToggles(d, simState());
+    if (pages) {
+      html += '<div class="ctl"><span>Info screen page ' + G.shownPage(d, simState()) + ' of ' + pages + '</span><div class="chips">'
+        + '<button class="chip" data-info="0">◀ Previous</button><button class="chip" data-info="1">Next ▶</button></div></div>';
+    }
+    if (d.elements.some((e) => e.type === 'text' && e.action)) {
+      html += '<div class="ctl"><span>Toggles' + (toggles.length ? '' : ' (none on this page)') + '</span><div class="chips">'
+        + '<button class="chip" data-info="2">▲ Select</button><button class="chip" data-info="3">▼ Select</button>'
+        + '<button class="chip" data-info="4">Switch</button></div></div>';
+    }
+    if (d.elements.some((e) => e.type === 'text' && G.STATE_CONTENTS[e.content])) {
+      html += '<div class="ctl"><span>D.O.P.E. switches</span><div class="chips">' + G.TOGGLE_ACTIONS.map(([k, l]) =>
+        '<button class="chip" data-toggle="' + k + '" aria-pressed="' + !!s.toggles[k] + '">' + esc(l) + '</button>').join('') + '</div></div>';
+    }
+    if (d.elements.some((e) => e.type === 'text' && (e.content === 'radioStation' || e.content === 'radioSong'))) {
+      html += '<div class="ctl"><span>Radio</span><div class="chips"><button class="chip" data-radio="1" aria-pressed="' + (s.radioOn !== false)
+        + '">' + (s.radioOn !== false ? 'On' : 'Off') + '</button></div></div>';
+    }
     const lamps = lampNames();
     if (lamps.length) {
       const words = { '-1': 'not fitted', 0: 'off', 1: 'lit', 2: 'flashing' };
@@ -1777,7 +1842,28 @@ button, input, select, textarea { font: inherit; color: inherit; }
     const m = e.target.closest('[data-metric]');
     const lp = e.target.closest('[data-lamp]');
     const md = e.target.closest('[data-mode]');
-    if (g) s.gear = Number(g.dataset.gear);
+    const inf = e.target.closest('[data-info]');
+    const tg = e.target.closest('[data-toggle]');
+    const rd = e.target.closest('[data-radio]');
+    if (inf) {
+      const d = state.design, which = Number(inf.dataset.info), pages = G.pageCount(d);
+      if (which <= 1 && pages) {
+        state.selected = null;
+        s.page = ((G.shownPage(d, simState()) - 1 + (which === 0 ? -1 : 1) + pages) % pages) + 1;
+        s.selected = 0;
+        renderInspector(); renderLayers();
+      } else if (which <= 3) {
+        const count = G.shownToggles(d, simState()).length;
+        if (count) s.selected = ((Math.round(n(s.selected, 0)) + (which === 2 ? -1 : 1)) % count + count) % count;
+      } else {
+        const list = G.shownToggles(d, simState());
+        const pick = list[Math.max(0, Math.min(list.length - 1, Math.round(n(s.selected, 0))))];
+        if (pick) s.toggles[pick.action] = !s.toggles[pick.action];
+      }
+    }
+    else if (tg) s.toggles[tg.dataset.toggle] = !s.toggles[tg.dataset.toggle];
+    else if (rd) s.radioOn = s.radioOn === false;
+    else if (g) s.gear = Number(g.dataset.gear);
     else if (md) s.driveMode = Number(md.dataset.mode);
     else if (f) s.flags[f.dataset.flag] = !s.flags[f.dataset.flag];
     else if (lp) {

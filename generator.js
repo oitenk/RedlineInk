@@ -274,9 +274,55 @@
     return String(gear);
   }
 
+  // ---- the info screen (D.O.P.E. 0.5.18): parts on pages (0 always shown), toggles that a key switches, on/off readouts
+  const TOGGLE_ACTIONS = [['traction', 'Traction control'], ['hillHold', 'Hill hold'], ['launch', 'Launch control']];
+  const STATE_CONTENTS = { tractionState: 'traction', hillHoldState: 'hillHold', launchState: 'launch' };
+  function pageCount(design) {
+    return (design.elements || []).reduce((m, e) => Math.max(m, Math.max(0, Math.round(num(e.page, 0)))), 0);
+  }
+  function shownPage(design, state) {
+    const count = pageCount(design);
+    return count ? Math.max(1, Math.min(count, Math.round(num(state.page, 1)))) : 0;
+  }
+  function onShownPage(design, el, state) {
+    const page = Math.max(0, Math.round(num(el.page, 0)));
+    return page === 0 || page === shownPage(design, state);
+  }
+  // The toggles shown now (those on page 0 and on the shown page, in the design's order) and the selected one.
+  function shownToggles(design, state) {
+    return (design.elements || []).filter((e) => e.type === 'text' && e.action && onShownPage(design, e, state));
+  }
+  function isSelected(design, el, state) {
+    if (!el.action) return false;
+    const list = shownToggles(design, state);
+    if (!list.length) return false;
+    const pick = list[Math.max(0, Math.min(list.length - 1, Math.round(num(state.selected, 0))))];
+    return pick === el || (pick.id !== undefined && pick.id === el.id);
+  }
+  function onOffWord(el, on) {
+    if (on === null || on === undefined) return '--';
+    return on ? (el.wordOn ?? 'ON') : (el.wordOff ?? 'OFF');
+  }
+  function clockText(el, state) {
+    const minutes = Math.max(0, Math.round(num(state.clockMinutes, 19 * 60 + 5))) % (24 * 60);
+    const h = Math.floor(minutes / 60), m = minutes % 60;
+    const mm = (m < 10 ? '0' : '') + m;
+    if (el.clock === '24h') return (h < 10 ? '0' : '') + h + ':' + mm;
+    return ((h % 12) || 12) + ':' + mm + (h < 12 ? ' AM' : ' PM');
+  }
+
   function textValue(design, el, state) {
+    const value = plainTextValue(design, el, state);
+    return isSelected(design, el, state) ? (design.selectMark ?? '> ') + value : value;
+  }
+
+  function plainTextValue(design, el, state) {
     const metric = state.metric ?? design.units !== 'mph';
+    if (STATE_CONTENTS[el.content]) return onOffWord(el, (state.toggles || {})[STATE_CONTENTS[el.content]]);
     switch (el.content) {
+      case 'radioStation': return state.radioOn === false ? '' : (state.radioStation || '');
+      case 'radioSong': return state.radioOn === false ? '' : (state.radioSong || '');
+      case 'clock': return clockText(el, state);
       case 'speed': return String(Math.round(displaySpeed(design, state)));
       case 'rpm': return String(Math.round(num(state.rpm)));
       case 'rpm1000': return (num(state.rpm) / 1000).toFixed(1);
@@ -311,7 +357,8 @@
     return el[MODE_COLORS[mode]] || el.color;
   }
   // The colour a part is drawn in before its light does anything: a drive mode readout's is its mode's.
-  function baseColorOf(el, state) {
+  function baseColorOf(el, state, design) {
+    if (design && isSelected(design, el, state)) return design.selectColor || '#ff9e14';
     if (el.type === 'text' && el.content === 'driveMode') {
       return modeColorOf(el, Math.max(0, Math.min(2, Math.round(num(state.driveMode, 0)))));
     }
@@ -635,6 +682,11 @@
         problems.push(label + ' has a localization key with spaces or symbols.');
       }
     });
+    const infoContents = ['radioStation', 'radioSong', 'clock', 'tractionState', 'hillHoldState', 'launchState'];
+    if (els.some((e) => num(e.page, 0) > 0 || e.action || (e.type === 'text' && infoContents.includes(e.content)))) {
+      problems.push('The info screen (pages, toggles, the radio, the clock and the on / off readouts) works with "Save to D.O.P.E." and D.O.P.E. 0.5.18 or later. '
+        + 'The redscript export shows every page at once, the toggles do nothing and those readouts stay empty.');
+    }
     if (design.hook === 'carTuning' && ident(design.module || '', '') === 'CarTuning') {
       problems.push('The module is CarTuning, which is D.O.P.E.\'s own. Give the dashboard a module of its own, or none.');
     }
@@ -2290,6 +2342,7 @@
     arcSegments, barSegments, lineRect, boxRect, segmentsFor,
     DIAL_MAX, dialNumbers, dialValues, dialPlace, dialTurn, dialBox, dialLabels, dialStep, dialCount,
     displaySpeed, rpmMax, sourceFraction, inRange, hasRange, textValue, gearText, lightOn, litCount, redFromIndex,
+    TOGGLE_ACTIONS, STATE_CONTENTS, pageCount, shownPage, onShownPage, shownToggles, isSelected,
     lightOffLook, unlitColorOf, baseColorOf, isRole, paletteOf, roleOf, resolveColor, resolveEl, roleId, COLOR_KEYS, MAX_ROLES,
     CAR_CLASSES, VANILLA_CARS, carList, carMakers, carsOnly,
     generate, check, fileNameFor, folderFor, installFolderFor, dashboardFile, dashboardFileName, pascal, ident, rgb,
