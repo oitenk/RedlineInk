@@ -460,7 +460,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
     grid: 10, snap: true, showGrid: true, ghosts: true,
     sim: { speed: 79, rpm: 4300, gear: 3, fuel: 0.58, metric: null, flags: {}, values: {}, lamps: { power: 1, engine: 1 },
       odometerKm: 77612.4, tripKm: 19.8, driveMode: 1,
-      page: 1, selected: 0, toggles: { traction: true, hillHold: false, launch: true }, launchRpm: 8000, editing: false, tyres: [32, 32, 31, 32], tyreUnit: 0,
+      page: 1, selected: 0, toggles: { traction: true, hillHold: false, launch: true }, launchRpm: 8000, editing: false, tyres: [32, 32, 32, 32], tyreLoss: [0, 0, 0, 0], tyreUnit: 0,
       radioOn: true, radioStation: 'Night City Radio', radioSong: 'Artist Name - A Rather Long Song Title', clockMinutes: 19 * 60 + 5 },
     tab: 'layers',
     isExample: false,
@@ -584,7 +584,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
     const mps = s.speed / (metric ? G.MPS_TO_KMH : G.MPS_TO_MPH);
     return { speedMps: mps, rpm: s.rpm, rpmMax: d.rpmMax, gear: s.gear, fuel: s.fuel, metric: metric,
       flags: s.flags, values: s.values, lamps: s.lamps, odometerKm: s.odometerKm, tripKm: s.tripKm, driveMode: s.driveMode,
-      page: shownPageNow(), selected: s.selected, toggles: s.toggles, launchRpm: s.launchRpm, editing: s.editing, tyres: s.tyres, tyreUnit: s.tyreUnit, radioOn: s.radioOn, radioStation: s.radioStation,
+      page: shownPageNow(), selected: s.selected, toggles: s.toggles, launchRpm: s.launchRpm, editing: s.editing, tyres: s.tyres.map((p, i) => (s.tyreLoss[i] >= 1 ? 0 : p * (1 - s.tyreLoss[i]))), tyreLoss: s.tyreLoss, tyreUnit: s.tyreUnit, radioOn: s.radioOn, radioStation: s.radioStation,
       radioSong: s.radioSong, clockMinutes: s.clockMinutes };
   }
 
@@ -1301,6 +1301,12 @@ button, input, select, textarea { font: inherit; color: inherit; }
           F.push(field({ key: k, label: label, type: 'color' }, el));
         });
       }
+      if (el.content in G.TYRE_CONTENTS) {
+        if (!el.colorWarn) el.colorWarn = G.TYRE_WARN_COLOR;
+        if (!el.colorAlarm) el.colorAlarm = G.TYRE_ALARM_COLOR;
+        F.push(field({ key: 'colorWarn', label: 'Warning colour (10% lost)', type: 'color' }, el));
+        F.push(field({ key: 'colorAlarm', label: 'Alarm colour (35% lost or flat)', type: 'color' }, el));
+      }
       if (G.STATE_CONTENTS[el.content]) {
         if (el.wordOn === undefined || el.wordOn === null) el.wordOn = 'ON';
         if (el.wordOff === undefined || el.wordOff === null) el.wordOff = 'OFF';
@@ -1826,6 +1832,12 @@ button, input, select, textarea { font: inherit; color: inherit; }
       html += '<div class="ctl"><span>D.O.P.E. switches</span><div class="chips">' + G.SWITCH_ACTIONS.map(([k, l]) =>
         '<button class="chip" data-toggle="' + k + '" aria-pressed="' + !!s.toggles[k] + '">' + esc(l) + '</button>').join('') + '</div></div>';
     }
+    if (d.elements.some((e) => e.type === 'text' && e.content in G.TYRE_CONTENTS)) {
+      const loss = n(s.tyreLoss[2], 0);
+      const word = loss >= 1 ? 'flat' : loss > 0 ? Math.round(loss * 100) + '% lost' : 'full';
+      html += '<div class="ctl"><span>Tyres</span><div class="chips"><button class="chip" data-tyreleak="1" aria-pressed="' + (loss > 0)
+        + '" title="Click: full, 15% lost (warning), 40% lost (alarm), flat">Rear left: ' + word + '</button></div></div>';
+    }
     if (d.elements.some((e) => e.type === 'text' && (e.content === 'radioStation' || e.content === 'radioSong'))) {
       html += '<div class="ctl"><span>Radio</span><div class="chips"><button class="chip" data-radio="1" aria-pressed="' + (s.radioOn !== false)
         + '">' + (s.radioOn !== false ? 'On' : 'Off') + '</button></div></div>';
@@ -1867,6 +1879,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
     const inf = e.target.closest('[data-info]');
     const tg = e.target.closest('[data-toggle]');
     const rd = e.target.closest('[data-radio]');
+    const tl = e.target.closest('[data-tyreleak]');
     if (inf) {
       const d = state.design, which = Number(inf.dataset.info), pages = G.pageCount(d);
       if (which <= 1 && pages) {
@@ -1893,6 +1906,12 @@ button, input, select, textarea { font: inherit; color: inherit; }
     }
     else if (tg) s.toggles[tg.dataset.toggle] = !s.toggles[tg.dataset.toggle];
     else if (rd) s.radioOn = s.radioOn === false;
+    else if (tl) {
+      const steps = [0, 0.15, 0.4, 1];
+      const at = steps.indexOf(n(s.tyreLoss[2], 0));
+      s.tyreLoss[2] = steps[(at + 1) % steps.length];
+      s.lamps.tyrePressure = s.tyreLoss[2] >= 0.1 ? 1 : 0; // the low pressure light with it, as D.O.P.E. lights it
+    }
     else if (g) s.gear = Number(g.dataset.gear);
     else if (md) s.driveMode = Number(md.dataset.mode);
     else if (f) s.flags[f.dataset.flag] = !s.flags[f.dataset.flag];

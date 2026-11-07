@@ -57,7 +57,7 @@
     { key: 'trunk', label: 'Trunk open', optional: true, help: 'Lit while the trunk is open. Hidden on bikes.' },
     { key: 'parkingBrake', label: 'Parking brake', help: 'Lit while D.O.P.E.\'s parking brake is set (its key, at a stop).' },
     { key: 'tyrePressure', label: 'Tyre pressure low', optional: true,
-      help: 'Lit while any tyre is under 75% of the car\'s normal pressure, a burst tyre too. Hidden on bikes. D.O.P.E. 0.5.25 or later.' },
+      help: 'Lit while any tyre has lost 10% or more of the pressure set for it, a burst tyre too. Hidden on bikes. D.O.P.E. 0.5.25 or later (10% from 0.5.28).' },
     { key: 'fogLights', label: 'Fog / utility lights', optional: true,
       help: 'Lit while the car\'s utility lights are on (D.O.P.E.\'s utility lights key). Hidden on cars without them.' },
     { key: 'knock', label: 'Knock (fuel grade too low)', optional: true,
@@ -288,6 +288,11 @@
     const u = Math.max(0, Math.min(3, Math.round(num(state.tyreUnit, 0))));
     return u === 0 ? (metric ? 2 : 1) : u;
   }
+  const TYRE_WARN_LOSS = 0.10, TYRE_ALARM_LOSS = 0.35, TYRE_WARN_COLOR = '#ffcc00', TYRE_ALARM_COLOR = '#ff2a2a';
+  function tyreLevel(state, i) {
+    const loss = num((state.tyreLoss || [])[i], 0);
+    return loss >= TYRE_ALARM_LOSS - 1e-4 ? 2 : (loss >= TYRE_WARN_LOSS - 1e-4 ? 1 : 0);
+  }
   function tyreText(psi, unit) {
     if (psi === null || psi === undefined || psi < 0) return '--';
     if (unit === 2) return (Math.round(psi * 0.689476) / 10).toFixed(1);
@@ -411,6 +416,12 @@
     if (el.type === 'text' && el.content === 'driveMode') {
       return modeColorOf(el, Math.max(0, Math.min(2, Math.round(num(state.driveMode, 0)))));
     }
+    // D.O.P.E. 0.5.28: a tyre pressure readout yellow at 10% of its set pressure lost, red at 35% (or flat)
+    if (el.type === 'text' && el.content in TYRE_CONTENTS) {
+      const level = tyreLevel(state, TYRE_CONTENTS[el.content]);
+      if (level === 2) return el.colorAlarm || TYRE_ALARM_COLOR;
+      if (level === 1) return el.colorWarn || TYRE_WARN_COLOR;
+    }
     return el.color;
   }
 
@@ -455,7 +466,7 @@
   // that is gone reads white (the design check says so).
   const MAX_ROLES = 12;
   const COLOR_KEYS = ['color', 'colorOn', 'colorOff', 'colorRedOn', 'colorRedOff', 'colorRed', 'modeComfortColor', 'modeSportColor',
-    'modeTrackColor'];
+    'modeTrackColor', 'colorWarn', 'colorAlarm'];
   const isRole = (v) => /^@[a-z0-9]+$/i.test(String(v || ''));
   const paletteOf = (design) => (Array.isArray(design && design.palette) ? design.palette : []).slice(0, MAX_ROLES);
   const roleOf = (design, v) => (isRole(v) ? paletteOf(design).find((r) => '@' + r.id === v) : null) || null;
@@ -2391,7 +2402,7 @@
     arcSegments, barSegments, lineRect, boxRect, segmentsFor,
     DIAL_MAX, dialNumbers, dialValues, dialPlace, dialTurn, dialBox, dialLabels, dialStep, dialCount,
     displaySpeed, rpmMax, sourceFraction, inRange, hasRange, textValue, gearText, lightOn, litCount, redFromIndex,
-    TOGGLE_ACTIONS, SWITCH_ACTIONS, STATE_CONTENTS, TYRE_CONTENTS, TYRE_UNITS, pageCount, shownPage, onShownPage, shownToggles, isSelected, songPart, scrollWindow,
+    TOGGLE_ACTIONS, SWITCH_ACTIONS, STATE_CONTENTS, TYRE_CONTENTS, TYRE_UNITS, TYRE_WARN_COLOR, TYRE_ALARM_COLOR, tyreLevel, pageCount, shownPage, onShownPage, shownToggles, isSelected, songPart, scrollWindow,
     lightOffLook, unlitColorOf, baseColorOf, isRole, paletteOf, roleOf, resolveColor, resolveEl, roleId, COLOR_KEYS, MAX_ROLES,
     CAR_CLASSES, VANILLA_CARS, carList, carMakers, carsOnly,
     generate, check, fileNameFor, folderFor, installFolderFor, dashboardFile, dashboardFileName, pascal, ident, rgb,

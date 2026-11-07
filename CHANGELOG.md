@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.19
+
+NEW! Tyre pressure readouts have a warning colour (yellow to start with, at 10% of the tyre's pressure lost) and an alarm colour (red, at 35% lost or flat). The test drive has a Tyres button that lets the rear left tyre down in steps, with the low pressure light following it. Needs D.O.P.E. 0.5.28 or later.
+
 ## 0.1.18
 
 NEW! Tyre pressure readouts for each tyre, a tyre pressure unit readout and its toggle (Enter switches between the speed's unit, psi,
