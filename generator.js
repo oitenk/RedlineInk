@@ -416,6 +416,12 @@
     if (el.type === 'text' && el.content === 'driveMode') {
       return modeColorOf(el, Math.max(0, Math.min(2, Math.round(num(state.driveMode, 0)))));
     }
+    // D.O.P.E. 0.5.29: a part lit by the tyre pressure light takes the worst tyre's warning or alarm colour
+    if (el.light && el.light.when === 'ct' && el.light.lamp === 'tyrePressure') {
+      const worst = Math.max(0, ...[0, 1, 2, 3].map((i) => tyreLevel(state, i)));
+      if (worst === 2) return el.colorAlarm || TYRE_ALARM_COLOR;
+      if (worst === 1) return el.colorWarn || TYRE_WARN_COLOR;
+    }
     // D.O.P.E. 0.5.28: a tyre pressure readout yellow at 10% of its set pressure lost, red at 35% (or flat)
     if (el.type === 'text' && el.content in TYRE_CONTENTS) {
       const level = tyreLevel(state, TYRE_CONTENTS[el.content]);

@@ -1442,6 +1442,12 @@ button, input, select, textarea { font: inherit; color: inherit; }
               .map(([k, t]) => '<option value="' + k + '"' + ((l.offLook || '') === k ? ' selected' : '') + '>' + t + '</option>').join('')
             + '</select></label>');
         }
+        if (when === 'ct' && l.lamp === 'tyrePressure') {
+          if (!el.colorWarn) el.colorWarn = G.TYRE_WARN_COLOR;
+          if (!el.colorAlarm) el.colorAlarm = G.TYRE_ALARM_COLOR;
+          F.push(field({ key: 'colorWarn', label: 'Warning colour (10% lost)', type: 'color' }, el));
+          F.push(field({ key: 'colorAlarm', label: 'Alarm colour (35% lost or flat)', type: 'color' }, el));
+        }
         if (when === 'ct' && (l.effect || 'show') === 'show' && (G.ctLamp(l.lamp) || G.CT_LAMPS[0]).flashes) {
           F.push('<p class="help" style="grid-column:1/-1;margin:0">Steady while lit and flashing four times a second while it flashes, exactly as D.O.P.E. gives it.</p>');
         }

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.20
+
+NEW! A part lit by D.O.P.E.'s tyre pressure light (the tyre pressure icon) takes a warning colour while the worst tyre has lost 10%
+of its pressure and an alarm colour at 35% or flat, as the readouts do. Set both in its light settings. Needs D.O.P.E. 0.5.29 or later.
+
 ## 0.1.19
 
 NEW! Tyre pressure readouts have a warning colour (yellow to start with, at 10% of the tyre's pressure lost) and an alarm colour (red, at 35% lost or flat). The test drive has a Tyres button that lets the rear left tyre down in steps, with the low pressure light following it. Needs D.O.P.E. 0.5.28 or later.
