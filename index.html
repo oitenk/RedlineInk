@@ -460,7 +460,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
     grid: 10, snap: true, showGrid: true, ghosts: true,
     sim: { speed: 79, rpm: 4300, gear: 3, fuel: 0.58, metric: null, flags: {}, values: {}, lamps: { power: 1, engine: 1 },
       odometerKm: 77612.4, tripKm: 19.8, driveMode: 1,
-      page: 1, selected: 0, toggles: { traction: true, hillHold: false, launch: true }, launchRpm: 8000, editing: false, tyres: [32, 32, 32, 32], tyreLoss: [0, 0, 0, 0], tyreUnit: 0,
+      page: 1, selected: 0, toggles: { traction: true, hillHold: false, launch: true }, launchRpm: 8000, editing: false, tyres: [32, 32, 32, 32], tyreLoss: [0, 0, 0, 0], tyreUnit: 0, date: { year: 2077, month: 4, day: 10, weekday: 5 },
       radioOn: true, radioStation: 'Night City Radio', radioSong: 'Artist Name - A Rather Long Song Title', clockMinutes: 19 * 60 + 5 },
     tab: 'layers',
     isExample: false,
@@ -584,7 +584,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
     const mps = s.speed / (metric ? G.MPS_TO_KMH : G.MPS_TO_MPH);
     return { speedMps: mps, rpm: s.rpm, rpmMax: d.rpmMax, gear: s.gear, fuel: s.fuel, metric: metric,
       flags: s.flags, values: s.values, lamps: s.lamps, odometerKm: s.odometerKm, tripKm: s.tripKm, driveMode: s.driveMode,
-      page: shownPageNow(), selected: s.selected, toggles: s.toggles, launchRpm: s.launchRpm, editing: s.editing, tyres: s.tyres.map((p, i) => (s.tyreLoss[i] >= 1 ? 0 : p * (1 - s.tyreLoss[i]))), tyreLoss: s.tyreLoss, tyreUnit: s.tyreUnit, radioOn: s.radioOn, radioStation: s.radioStation,
+      page: shownPageNow(), selected: s.selected, toggles: s.toggles, launchRpm: s.launchRpm, editing: s.editing, tyres: s.tyres.map((p, i) => (s.tyreLoss[i] >= 1 ? 0 : p * (1 - s.tyreLoss[i]))), tyreLoss: s.tyreLoss, tyreUnit: s.tyreUnit, date: s.date, radioOn: s.radioOn, radioStation: s.radioStation,
       radioSong: s.radioSong, clockMinutes: s.clockMinutes };
   }
 
@@ -1123,7 +1123,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
       ['clock', 'Time of day'], ['tractionState', 'Traction control: on / off'], ['hillHoldState', 'Hill hold: on / off'],
       ['launchState', 'Launch control: on / off'], ['launchRpm', 'Launch control: launch rpm'],
       ['tyreFL', 'Tyre pressure: front left'], ['tyreFR', 'Tyre pressure: front right'], ['tyreRL', 'Tyre pressure: rear left'],
-      ['tyreRR', 'Tyre pressure: rear right'], ['tyreUnit', 'Tyre pressure unit (psi, bar or kPa)']],
+      ['tyreRR', 'Tyre pressure: rear right'], ['date', 'Date (needs DigitalVixen\'s Calendar)'], ['tyreUnit', 'Tyre pressure unit (psi, bar or kPa)']],
   };
   SOURCE_OPTIONS.numbers = [['speed', 'Speed: 0 to full-scale speed'], ['rpm', 'RPM in thousands'], ['labels', 'My own labels']];
   const NUMBERS_HELP = {
@@ -1159,6 +1159,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
     tyreFR: 'Shows the front right tyre\'s pressure; 0 for a burst tyre, -- on a bike. D.O.P.E. 0.5.25 or later.',
     tyreRL: 'Shows the rear left tyre\'s pressure; 0 for a burst tyre, -- on a bike. D.O.P.E. 0.5.25 or later.',
     tyreRR: 'Shows the rear right tyre\'s pressure; 0 for a burst tyre, -- on a bike. D.O.P.E. 0.5.25 or later.',
+    date: 'Shows the in-game date from DigitalVixen\'s Calendar mod (Nexus 30331), in the format below; -- without Calendar installed. D.O.P.E. 0.5.30 or later.',
     tyreUnit: 'Shows the tyre pressures\' unit: psi with mph and bar with km/h, or the player\'s choice. Make it the Tyre pressure unit toggle below so Enter on the info screen changes it (as the speed, psi, bar, kPa). D.O.P.E. 0.5.25 or later.',
     launchRpm: 'Shows the revs launch control holds for a staged start, kept for each car; your word for the limiter; -- with D.O.P.E.\'s tyre model off. Make it the Launch rpm toggle below so the player can set it. D.O.P.E. 0.5.22 or later.',
   };
@@ -1316,6 +1317,10 @@ button, input, select, textarea { font: inherit; color: inherit; }
       if (el.content === 'launchRpm') {
         if (el.wordMax === undefined || el.wordMax === null) el.wordMax = 'MAX';
         F.push(field({ key: 'wordMax', label: 'Limiter text', type: 'text' }, el));
+      }
+      if (el.content === 'date') {
+        if (!el.dateFormat) el.dateFormat = 'short';
+        F.push(field({ key: 'dateFormat', label: 'Date format', type: 'select', wide: true, options: G.DATE_FORMATS }, el));
       }
       if (el.content === 'clock') {
         F.push(field({ key: 'clock', label: 'Clock', type: 'select', options: [['12h', '12 hours (7:05 PM)'], ['24h', '24 hours (19:05)']] }, el));

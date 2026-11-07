@@ -339,6 +339,28 @@
     const fit = Math.max(1, Math.floor(num(el.w, 100) / (num(el.size, 16) * 0.5)));
     return value.length > fit ? value.slice(0, fit) : value;
   }
+  // D.O.P.E. 0.5.30: the in-game date from DigitalVixen's Calendar, in the readout's format (as D.O.P.E.'s CalendarDate.reds)
+  const DATE_FORMATS = [['long', 'Saturday, April 10, 2077'], ['short', 'Sat, 10 Apr 2077'], ['iso', '2077-04-10'], ['us', '04/10/2077'],
+    ['eu', '10.04.2077'], ['dayMonth', '10 Apr'], ['monthDay', 'Apr 10'], ['weekday', 'Saturday'], ['weekdayShort', 'Sat']];
+  const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  function dateText(el, state) {
+    const d = state.date;
+    if (!d) return '--';
+    const two = (n) => (n < 10 ? '0' : '') + n;
+    const wd = WEEKDAYS[d.weekday] || '', mo = MONTHS[d.month - 1] || '';
+    switch (el.dateFormat || 'short') {
+      case 'long': return wd + ', ' + mo + ' ' + d.day + ', ' + d.year;
+      case 'iso': return d.year + '-' + two(d.month) + '-' + two(d.day);
+      case 'us': return two(d.month) + '/' + two(d.day) + '/' + d.year;
+      case 'eu': return two(d.day) + '.' + two(d.month) + '.' + d.year;
+      case 'dayMonth': return d.day + ' ' + mo.slice(0, 3);
+      case 'monthDay': return mo.slice(0, 3) + ' ' + d.day;
+      case 'weekday': return wd;
+      case 'weekdayShort': return wd.slice(0, 3);
+      default: return wd.slice(0, 3) + ', ' + d.day + ' ' + mo.slice(0, 3) + ' ' + d.year;
+    }
+  }
   function clockText(el, state) {
     const minutes = Math.max(0, Math.round(num(state.clockMinutes, 19 * 60 + 5))) % (24 * 60);
     const h = Math.floor(minutes / 60), m = minutes % 60;
@@ -377,6 +399,7 @@
       case 'radioArtist': return state.radioOn === false ? '' : songPart(state.radioSong || '', false);
       case 'radioTitle': return state.radioOn === false ? '' : songPart(state.radioSong || '', true);
       case 'clock': return clockText(el, state);
+      case 'date': return dateText(el, state);
       case 'speed': return String(Math.round(displaySpeed(design, state)));
       case 'rpm': return String(Math.round(num(state.rpm)));
       case 'rpm1000': return (num(state.rpm) / 1000).toFixed(1);
@@ -748,7 +771,7 @@
         problems.push(label + ' has a localization key with spaces or symbols.');
       }
     });
-    const infoContents = ['radioStation', 'radioSong', 'radioArtist', 'radioTitle', 'clock', 'tractionState', 'hillHoldState', 'launchState', 'launchRpm', 'tyreFL', 'tyreFR', 'tyreRL', 'tyreRR', 'tyreUnit'];
+    const infoContents = ['radioStation', 'radioSong', 'radioArtist', 'radioTitle', 'clock', 'tractionState', 'hillHoldState', 'launchState', 'launchRpm', 'tyreFL', 'tyreFR', 'tyreRL', 'tyreRR', 'tyreUnit', 'date'];
     if (els.some((e) => num(e.page, 0) > 0 || e.action || (e.type === 'text' && infoContents.includes(e.content)))) {
       problems.push('The info screen (pages, toggles, the radio, the clock and the on / off readouts) works with "Save to D.O.P.E." and D.O.P.E. 0.5.18 or later. '
         + 'The redscript export shows every page at once, the toggles do nothing and those readouts stay empty.');
@@ -2408,7 +2431,7 @@
     arcSegments, barSegments, lineRect, boxRect, segmentsFor,
     DIAL_MAX, dialNumbers, dialValues, dialPlace, dialTurn, dialBox, dialLabels, dialStep, dialCount,
     displaySpeed, rpmMax, sourceFraction, inRange, hasRange, textValue, gearText, lightOn, litCount, redFromIndex,
-    TOGGLE_ACTIONS, SWITCH_ACTIONS, STATE_CONTENTS, TYRE_CONTENTS, TYRE_UNITS, TYRE_WARN_COLOR, TYRE_ALARM_COLOR, tyreLevel, pageCount, shownPage, onShownPage, shownToggles, isSelected, songPart, scrollWindow,
+    DATE_FORMATS, dateText, TOGGLE_ACTIONS, SWITCH_ACTIONS, STATE_CONTENTS, TYRE_CONTENTS, TYRE_UNITS, TYRE_WARN_COLOR, TYRE_ALARM_COLOR, tyreLevel, pageCount, shownPage, onShownPage, shownToggles, isSelected, songPart, scrollWindow,
     lightOffLook, unlitColorOf, baseColorOf, isRole, paletteOf, roleOf, resolveColor, resolveEl, roleId, COLOR_KEYS, MAX_ROLES,
     CAR_CLASSES, VANILLA_CARS, carList, carMakers, carsOnly,
     generate, check, fileNameFor, folderFor, installFolderFor, dashboardFile, dashboardFileName, pascal, ident, rgb,

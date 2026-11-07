@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.21
+
+NEW! Date readout: the in-game date from DigitalVixen's Calendar mod, in a format of your choice (from "Saturday, April 10, 2077" to
+just "Sat"). It shows -- in the game without Calendar installed. Needs "Save to D.O.P.E." and D.O.P.E. 0.5.30 or later.
+
 ## 0.1.20
 
 NEW! A part lit by D.O.P.E.'s tyre pressure light (the tyre pressure icon) takes a warning colour while the worst tyre has lost 10%
