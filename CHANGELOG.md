@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.18
+
+NEW! Tyre pressure readouts for each tyre, a tyre pressure unit readout and its toggle (Enter switches between the speed's unit, psi,
+bar and kPa), and the D.O.P.E. light for low tyre pressure: picking the tyre pressure icon on a D.O.P.E. dashboard makes it that
+light. The test drive shows them. Needs "Save to D.O.P.E." and D.O.P.E. 0.5.25 or later.
+
+## 0.1.17
+
+NEW! Launch rpm readout and toggle: shows the revs launch control holds for a staged start, with your own word for the limiter
+(MAX to start with). Made the Launch rpm toggle, the player highlights it on the info screen, presses Enter, then sets it with the
+up and down arrows and presses Enter again. The test drive does the same. Needs "Save to D.O.P.E." and D.O.P.E. 0.5.22 or later.
+
 ## 0.1.16
 
 NEW! Radio artist and radio song title readouts: the game's "Artist - Title" split in two. The radio song readout with both stays.

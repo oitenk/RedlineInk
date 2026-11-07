@@ -56,6 +56,8 @@
     { key: 'hood', label: 'Hood open', optional: true, help: 'Lit while the hood is open. Hidden on bikes.' },
     { key: 'trunk', label: 'Trunk open', optional: true, help: 'Lit while the trunk is open. Hidden on bikes.' },
     { key: 'parkingBrake', label: 'Parking brake', help: 'Lit while D.O.P.E.\'s parking brake is set (its key, at a stop).' },
+    { key: 'tyrePressure', label: 'Tyre pressure low', optional: true,
+      help: 'Lit while any tyre is under 75% of the car\'s normal pressure, a burst tyre too. Hidden on bikes. D.O.P.E. 0.5.25 or later.' },
     { key: 'fogLights', label: 'Fog / utility lights', optional: true,
       help: 'Lit while the car\'s utility lights are on (D.O.P.E.\'s utility lights key). Hidden on cars without them.' },
     { key: 'knock', label: 'Knock (fuel grade too low)', optional: true,
@@ -102,7 +104,7 @@
     { key: 'serviceRequired', label: 'Service required', atlas: 'oitenk\\car_tuning\\service_required.inkatlas', part: 'service_required', color: '#ff9e14', preview: 'icons/service_required.png' },
     { key: 'speedLimiter', label: 'Speed limiter', atlas: 'oitenk\\car_tuning\\speed_limiter.inkatlas', part: 'speed_limiter', color: '#45ff6e', preview: 'icons/speed_limiter.png' },
     { key: 'tempWarning', label: 'Temperature warning', atlas: 'oitenk\\car_tuning\\temp_warning.inkatlas', part: 'temp_warning', color: '#ff3d3d', preview: 'icons/temp_warning.png' },
-    { key: 'tirePressureLow', label: 'Tyre pressure low', atlas: 'oitenk\\car_tuning\\tire_pressure_low.inkatlas', part: 'tire_pressure_low', color: '#ff9e14', preview: 'icons/tire_pressure_low.png' },
+    { key: 'tirePressureLow', label: 'Tyre pressure low', atlas: 'oitenk\\car_tuning\\tire_pressure_low.inkatlas', part: 'tire_pressure_low', color: '#ff9e14', preview: 'icons/tire_pressure_low.png', lamp: 'tyrePressure' },
     { key: 'trunkOpen', label: 'Trunk open', atlas: 'oitenk\\car_tuning\\trunk_open.inkatlas', part: 'trunk_open', color: '#ff3d3d', preview: 'icons/trunk_open.png', lamp: 'trunk' },
     { key: 'washerFluidLow', label: 'Washer fluid low', atlas: 'oitenk\\car_tuning\\washer_fluid_low.inkatlas', part: 'washer_fluid_low', color: '#ff9e14', preview: 'icons/washer_fluid_low.png' },
   ];
@@ -275,7 +277,23 @@
   }
 
   // ---- the info screen (D.O.P.E. 0.5.18): parts on pages (0 always shown), toggles that a key switches, on/off readouts
-  const TOGGLE_ACTIONS = [['traction', 'Traction control'], ['hillHold', 'Hill hold'], ['launch', 'Launch control']];
+  // D.O.P.E. 0.5.22: launchRpm is not switched; Enter opens it, the select keys raise and lower it, Enter closes it
+  const TOGGLE_ACTIONS = [['traction', 'Traction control'], ['hillHold', 'Hill hold'], ['launch', 'Launch control'],
+    ['launchRpm', 'Launch rpm (set with up and down)'], ['tyreUnit', 'Tyre pressure unit']];
+  const SWITCH_ACTIONS = TOGGLE_ACTIONS.filter(([k]) => k !== 'launchRpm' && k !== 'tyreUnit');
+  // D.O.P.E. 0.5.25: tyre pressures (psi in the preview state), shown in the dashboard's unit
+  const TYRE_CONTENTS = { tyreFL: 0, tyreFR: 1, tyreRL: 2, tyreRR: 3 };
+  const TYRE_UNITS = ['auto', 'psi', 'bar', 'kPa'];
+  function tyreUnitShown(state, metric) {
+    const u = Math.max(0, Math.min(3, Math.round(num(state.tyreUnit, 0))));
+    return u === 0 ? (metric ? 2 : 1) : u;
+  }
+  function tyreText(psi, unit) {
+    if (psi === null || psi === undefined || psi < 0) return '--';
+    if (unit === 2) return (Math.round(psi * 0.689476) / 10).toFixed(1);
+    if (unit === 3) return String(Math.round(psi * 6.89476));
+    return String(Math.round(psi));
+  }
   const STATE_CONTENTS = { tractionState: 'traction', hillHoldState: 'hillHold', launchState: 'launch' };
   function pageCount(design) {
     return (design.elements || []).reduce((m, e) => Math.max(m, Math.max(0, Math.round(num(e.page, 0)))), 0);
@@ -324,14 +342,30 @@
     return ((h % 12) || 12) + ':' + mm + (h < 12 ? ' AM' : ' PM');
   }
 
+  // Launch control's launch rpm (D.O.P.E. 0.5.22): grouped, the part's word at the limiter, -- without launch control.
+  function launchRpmText(design, el, state) {
+    const rpm = state.launchRpm;
+    if (rpm === null || rpm === undefined || (state.toggles || {}).launch === null) return '--';
+    if (rpm >= rpmMax(design, state) - 1) return el.wordMax ?? 'MAX';
+    return Math.round(rpm).toLocaleString('en-US');
+  }
+
   function textValue(design, el, state) {
-    const value = plainTextValue(design, el, state);
-    return isSelected(design, el, state) ? (design.selectMark ?? '> ') + value : value;
+    let value = plainTextValue(design, el, state);
+    const selected = isSelected(design, el, state);
+    if (selected && state.editing && el.action === 'launchRpm') value = '< ' + value + ' >';
+    return selected ? (design.selectMark ?? '> ') + value : value;
   }
 
   function plainTextValue(design, el, state) {
     const metric = state.metric ?? design.units !== 'mph';
     if (STATE_CONTENTS[el.content]) return onOffWord(el, (state.toggles || {})[STATE_CONTENTS[el.content]]);
+    if (el.content === 'launchRpm') return launchRpmText(design, el, state);
+    if (el.content in TYRE_CONTENTS) return tyreText((state.tyres || [])[TYRE_CONTENTS[el.content]], tyreUnitShown(state, metric));
+    if (el.content === 'tyreUnit') {
+      const name = TYRE_UNITS[tyreUnitShown(state, metric)];
+      return Math.round(num(state.tyreUnit, 0)) === 0 && isSelected(design, el, state) ? name + ' auto' : name;
+    }
     switch (el.content) {
       case 'radioStation': return state.radioOn === false ? '' : (state.radioStation || '');
       case 'radioSong': return state.radioOn === false ? '' : (state.radioSong || '');
@@ -697,7 +731,7 @@
         problems.push(label + ' has a localization key with spaces or symbols.');
       }
     });
-    const infoContents = ['radioStation', 'radioSong', 'radioArtist', 'radioTitle', 'clock', 'tractionState', 'hillHoldState', 'launchState'];
+    const infoContents = ['radioStation', 'radioSong', 'radioArtist', 'radioTitle', 'clock', 'tractionState', 'hillHoldState', 'launchState', 'launchRpm', 'tyreFL', 'tyreFR', 'tyreRL', 'tyreRR', 'tyreUnit'];
     if (els.some((e) => num(e.page, 0) > 0 || e.action || (e.type === 'text' && infoContents.includes(e.content)))) {
       problems.push('The info screen (pages, toggles, the radio, the clock and the on / off readouts) works with "Save to D.O.P.E." and D.O.P.E. 0.5.18 or later. '
         + 'The redscript export shows every page at once, the toggles do nothing and those readouts stay empty.');
@@ -2357,7 +2391,7 @@
     arcSegments, barSegments, lineRect, boxRect, segmentsFor,
     DIAL_MAX, dialNumbers, dialValues, dialPlace, dialTurn, dialBox, dialLabels, dialStep, dialCount,
     displaySpeed, rpmMax, sourceFraction, inRange, hasRange, textValue, gearText, lightOn, litCount, redFromIndex,
-    TOGGLE_ACTIONS, STATE_CONTENTS, pageCount, shownPage, onShownPage, shownToggles, isSelected, songPart, scrollWindow,
+    TOGGLE_ACTIONS, SWITCH_ACTIONS, STATE_CONTENTS, TYRE_CONTENTS, TYRE_UNITS, pageCount, shownPage, onShownPage, shownToggles, isSelected, songPart, scrollWindow,
     lightOffLook, unlitColorOf, baseColorOf, isRole, paletteOf, roleOf, resolveColor, resolveEl, roleId, COLOR_KEYS, MAX_ROLES,
     CAR_CLASSES, VANILLA_CARS, carList, carMakers, carsOnly,
     generate, check, fileNameFor, folderFor, installFolderFor, dashboardFile, dashboardFileName, pascal, ident, rgb,
